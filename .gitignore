@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+dist/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Editors
+.idea/
+.vscode/
+
+# Local data
+*.sqlite3
+*.db
+
+# Build metadata
+*.egg-info/
+*.tsbuildinfo
+build/
+
+# Optional project-local Python runtime
+.python/
