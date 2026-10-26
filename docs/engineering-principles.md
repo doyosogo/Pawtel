@@ -14,4 +14,4 @@ PAWTEL aims to demonstrate maintainable software through complete end-to-end wor
 - Keep responsibilities clear, files reasonably small and architecture proportional to a finishable project.
 - Document limitations honestly, including planned capabilities that are not implemented.
 
-The foundation contains no domain entities, authentication, booking rules or payment processing. Their design belongs to later milestones.
+Milestone 2 implements relational persistence and records a proposed booking/concurrency design. Authentication, booking services and payment processing remain future milestones. Database constraints alone do not claim to implement those workflows.

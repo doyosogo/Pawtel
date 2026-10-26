@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ROOT / ".env", extra="ignore")
     app_name: str = "PAWTEL API"
     database_url: PostgresDsn | None = None
+    test_database_url: PostgresDsn | None = None
     backend_cors_origins: list[str] = ["http://localhost:5173"]
 
 

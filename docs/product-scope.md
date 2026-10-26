@@ -20,4 +20,4 @@ The architecture should accommodate daycare, house sitting, drop-in visits, and 
 
 ## Explicitly deferred functionality
 
-The current milestone is foundation only. Authentication, email verification, Host mode, listings, pets, booking workflows, pricing, payments, messaging, dashboards, search, maps, reviews, and seed data are not implemented. Domain models and database migrations will be designed in a later milestone. External integrations are also deferred. An admin panel is also outside this foundation milestone.
+Milestone 2 adds local PostgreSQL, relational models, migrations and database tests only. Authentication/email-verification workflows, Host-mode enablement APIs, pet/listing CRUD APIs, booking workflows, pricing, payments, messaging, dashboards, search, maps, reviews, and seed data are not implemented. Domain persistence now exists; domain API endpoints and workflows remain deferred. External integrations are also deferred. An admin panel is outside this milestone.

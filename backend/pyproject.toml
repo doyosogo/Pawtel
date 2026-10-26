@@ -25,6 +25,7 @@ include = ["app*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["integration: requires dedicated local PostgreSQL 18 pawtel_test database"]
 
 [tool.ruff]
 target-version = "py314"
