@@ -5,12 +5,11 @@ of dogs/cats and accommodation hosts. One account will support optional Host mod
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 4 — private owner-managed Pet Profiles.** Implemented: the
-existing authentication foundation and relational schema, plus owner-scoped pet
-create/list/get/update/soft-archive APIs. Profile preparation is allowed before email
-verification for active authenticated users. There is no frontend Pet screen/form,
-external email delivery or public resend endpoint. Listing APIs, host onboarding,
-booking/capacity/pricing/payment workflows and the polished UI remain deferred.
+**Status: Milestone 5 — private Host and Listing management.** Implemented:
+registration/session authentication, private Pet Profiles, optional Host mode and
+verified-host Listing configuration. Listing management is private: even PUBLISHED
+records have no public browsing/search endpoint. No Host/Pet frontend, external email
+delivery, booking/availability/quote/payment workflow or polished UI exists yet.
 
 ## Stack and layout
 
@@ -22,12 +21,12 @@ booking/capacity/pricing/payment workflows and the polished UI remain deferred.
 ```text
 frontend/src/app/       # Routing/providers
 frontend/src/pages/     # Temporary screen and smoke test
-backend/app/api/        # Health, versioned auth/pet routes and safe errors
+backend/app/api/        # Health, versioned auth/pet/host routes and safe errors
 backend/app/core/       # Environment settings
 backend/app/db/         # Base metadata, lazy engine/session infrastructure
 backend/app/models/     # Domain and authentication persistence
-backend/app/schemas/    # Explicit auth and pet input/output contracts
-backend/app/services/   # Focused transactional auth/pet operations
+backend/app/schemas/    # Explicit auth, pet and host input/output contracts
+backend/app/services/   # Focused transactional auth/pet/host operations
 backend/app/security/   # Credentials, CSRF and permission dependencies
 backend/alembic/        # Migration environment and versioned schema
 backend/tests/          # Health/safety unit tests and PostgreSQL integration tests
@@ -232,7 +231,7 @@ No Pet management frontend exists yet.
 ## Deliberate limitations
 
 No email delivery, public resend endpoint, password reset, OAuth, MFA, polished auth
-UI or listing/booking/payment workflows are implemented. Before public deployment,
+UI or booking/payment workflows are implemented. Before public deployment,
 add rate limiting/credential-stuffing controls, email recovery/delivery, deployment
 hardening and session cleanup/retention. Current security tests reduce risk but do
 not establish timing immunity or complete production security.
@@ -242,3 +241,21 @@ pet/booking owner matching or pricing formulas. Those belong to later transactio
 services and concurrency tests. Search, messaging, reviews, maps, notifications,
 images and admin functionality also remain deferred. There is no measured index
 performance claim or production runtime/migration-role separation yet.
+
+## Host and Listing management (Milestone 5)
+
+See [Host/Listing API contract](docs/host-listings.md) and
+[ADR 0004](docs/adr/0004-verified-private-host-management.md).
+All `/api/v1/host` reads and writes require an active, authenticated, email-verified
+User. POST `/profile` enables Host mode on that same account; GET/PATCH `/profile`
+read/edit its optional bio. POST/GET `/listings` and GET/PATCH/DELETE
+`/listings/{listing_id}` manage only that Host's Listings. Writes use the same JSON,
+request-marker, Origin and session-CSRF protections as Pet writes; DELETE sends `{}`.
+There is no real email provider yet; tests verify accounts using internal token
+issuance, without exposing tokens in production API responses.
+
+Creation always produces DRAFT. PATCH can select DRAFT/PUBLISHED; publication needs
+at least one accepted species. DELETE archives permanently through this API while
+preserving the row. No public visibility is implemented. Prices are strict integer
+cents; capacity is configuration, not date availability. No migration/index/dependency
+change was needed; revision remains `868589ec460a`.

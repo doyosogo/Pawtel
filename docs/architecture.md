@@ -28,8 +28,10 @@ app/models contains typed account, pet, listing and booking persistence models, 
 common UUID/timestamp mixins and native enum declarations. An explicit registry in
 app/models/__init__.py imports every model; Alembic imports it for complete metadata.
 TYPE_CHECKING imports and SQLAlchemy forward relationships avoid runtime model
-import cycles. These are database models, not Pydantic API schemas. Pet Profiles are exposed only through owner-scoped services. Listings and bookings
-are not exposed through marketplace endpoints. Authentication uses explicit
+import cycles. These are database models, not Pydantic API schemas. Pet Profiles
+are exposed only through owner-scoped services. Listings now have private verified-host
+management APIs; public marketplace browsing
+and booking workflows remain deferred. Authentication uses explicit
 Pydantic input/output schemas, not general ORM serialization.
 
 Alembic owns schema creation and versioning. The initial migration is independent
@@ -84,3 +86,12 @@ The router reuses synchronizer CSRF for writes. Missing and foreign resources sh
 credentialed CORS additionally allows PATCH/DELETE for the same exact origins.
 No explicit row locks/versioning or generic repository framework was introduced.
 See [Pet ownership design](pet-profiles.md) and [ADR 0003](adr/0003-private-pet-ownership.md).
+
+## Host management boundary (Milestone 5)
+
+The existing verified-user dependency gates all private Host endpoints. Focused Host
+and Listing services derive the shared HostProfile key from authenticated identity,
+use owner-scoped SQL and own atomic Listing/species transactions. Explicit response
+schemas avoid relationship/security serialization. No migration or new infrastructure
+was necessary. See [Host/Listing contract](host-listings.md) and ADR 0004 for lifecycle,
+archive, validation and current last-writer-wins limitations.

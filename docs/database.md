@@ -158,8 +158,10 @@ Listing holds suburb, Australian state/territory, a four-character numeric postc
 and country code AU. Postcodes are text to preserve leading zeroes. These fields
 support later geocoding/search design, but no address verification, postcode/suburb
 cross-validation, coordinates, private street address or map integration exists.
-Listing status is DRAFT, PUBLISHED or ARCHIVED; it defaults to DRAFT. Publication
-validation and listing lifecycle transitions remain future service responsibilities.
+Listing status is DRAFT, PUBLISHED or ARCHIVED; it defaults to DRAFT. Milestone 5
+now enforces publication readiness and lifecycle transitions in the private
+Host service: published records require species, while archive preserves historical
+references. Public browsing and booking-dependent lifecycle rules remain deferred.
 
 ListingAcceptedSpecies is a small relation keyed by `(listing_id, species)`. It
 avoids one Boolean column per species and prevents duplicate acceptance rows. It
@@ -431,3 +433,13 @@ DELETE sets is_active=false and preserves references. The API exposes no ownersh
 transfer or restore field. See [Pet API semantics](pet-profiles.md) for validation,
 privacy and current concurrent-update limitations. The schema remains at revision
 868589ec460a and no new performance claim is made for the existing indexes.
+
+## Host/Listing APIs (Milestone 5)
+
+The committed HostProfile, Listing and ListingAcceptedSpecies schema was sufficient;
+no migration or index was added. Shared HostProfile identity, ix_listings_host_id,
+Listing primary key and association composite primary key serve the new queries.
+Verified-email/HTTP ownership and publication readiness are application rules, not
+foreign-key guarantees. See [Host/Listing API](host-listings.md) for atomic species
+replacement, private-resource 404 policy and archive semantics. Schema revision is
+still 868589ec460a.
