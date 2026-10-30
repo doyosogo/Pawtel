@@ -1,7 +1,7 @@
 # Booking state machine (design only)
 
 These are intended legal transitions for later services. This milestone stores
-states but implements **no** booking endpoints, acceptance logic, capacity service,
+states but implements **no** booking endpoints, acceptance logic, capacity reservation service,
 pricing service, scheduled expiry or payment integration. PostgreSQL validates enum
 membership and the basic row constraints, not old-to-new transitions.
 
@@ -94,3 +94,11 @@ listing; measure before introducing per-night inventory rows or finer-grained lo
 No Redis, distributed lock or additional infrastructure is proposed.
 
 Reference: [PostgreSQL 18 explicit locking](https://www.postgresql.org/docs/18/explicit-locking.html).
+
+## Public advisory reads (Milestone 6)
+
+Public search now calculates per-night occupancy using a SQL event sweep, counting
+only AWAITING_PAYMENT and CONFIRMED. It neither changes state nor reserves capacity
+and takes no row locks. Payment holds remain reserved until explicitly transitioned,
+even after their deadline. This does not implement the acceptance concurrency strategy
+above. See [public discovery](listing-discovery.md) and ADR 0005.

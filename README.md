@@ -5,10 +5,10 @@ of dogs/cats and accommodation hosts. One account will support optional Host mod
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 5 — private Host and Listing management.** Implemented:
+**Status: Milestone 6 — public discovery and advisory availability.** Implemented:
 registration/session authentication, private Pet Profiles, optional Host mode and
-verified-host Listing configuration. Listing management is private: even PUBLISHED
-records have no public browsing/search endpoint. No Host/Pet frontend, external email
+verified-host Listing configuration, plus published-only public discovery/detail and
+date-aware capacity snapshots. Public reads do not reserve capacity. No Host/Pet frontend, external email
 delivery, booking/availability/quote/payment workflow or polished UI exists yet.
 
 ## Stack and layout
@@ -238,7 +238,7 @@ not establish timing immunity or complete production security.
 
 Domain constraints still do not enforce per-night capacity, booking state transitions,
 pet/booking owner matching or pricing formulas. Those belong to later transactional
-services and concurrency tests. Search, messaging, reviews, maps, notifications,
+services and concurrency tests. Ranked/geospatial search, messaging, reviews, maps, notifications,
 images and admin functionality also remain deferred. There is no measured index
 performance claim or production runtime/migration-role separation yet.
 
@@ -256,6 +256,19 @@ issuance, without exposing tokens in production API responses.
 
 Creation always produces DRAFT. PATCH can select DRAFT/PUBLISHED; publication needs
 at least one accepted species. DELETE archives permanently through this API while
-preserving the row. No public visibility is implemented. Prices are strict integer
+preserving the row. Public visibility now exists only for PUBLISHED records through the separate Milestone 6 API. Prices are strict integer
 cents; capacity is configuration, not date availability. No migration/index/dependency
 change was needed; revision remains `868589ec460a`.
+
+## Public Listing discovery (Milestone 6)
+
+GET `/api/v1/listings` supports location, all-requested species, base-price and capacity
+filters with bounded limit/offset pagination. GET `/api/v1/listings/{id}` exposes only
+published details and safe Host display information. GET
+`/api/v1/listings/{id}/availability?check_in=2027-11-10&check_out=2027-11-12&pet_count=1`
+returns advisory remaining capacity. Dates in collection search require pet_count too.
+No authentication/CSRF is required for these read-only endpoints. Draft/archived/missing
+records share public 404. Availability is NOT a reservation; acceptance must recheck
+transactionally later. No booking API or frontend was added. See
+[discovery contract](docs/listing-discovery.md) and
+[ADR 0005](docs/adr/0005-advisory-public-availability.md).

@@ -30,8 +30,8 @@ app/models/__init__.py imports every model; Alembic imports it for complete meta
 TYPE_CHECKING imports and SQLAlchemy forward relationships avoid runtime model
 import cycles. These are database models, not Pydantic API schemas. Pet Profiles
 are exposed only through owner-scoped services. Listings now have private verified-host
-management APIs; public marketplace browsing
-and booking workflows remain deferred. Authentication uses explicit
+management APIs; Milestone 6 adds published-only public browsing and advisory
+availability. Booking workflows remain deferred. Authentication uses explicit
 Pydantic input/output schemas, not general ORM serialization.
 
 Alembic owns schema creation and versioning. The initial migration is independent
@@ -95,3 +95,12 @@ use owner-scoped SQL and own atomic Listing/species transactions. Explicit respo
 schemas avoid relationship/security serialization. No migration or new infrastructure
 was necessary. See [Host/Listing contract](host-listings.md) and ADR 0004 for lifecycle,
 archive, validation and current last-writer-wins limitations.
+
+## Public discovery (Milestone 6)
+
+Separate unauthenticated GET routes expose published-only Listing DTOs, including
+safe display-name/bio Host summaries. Existing private route dependencies/middleware
+remain unchanged. A focused discovery service builds filtered, paginated SQL with
+joined relationships and a booking-boundary event sweep for advisory occupancy.
+No schema/index migration or reservation workflow was added. See
+[discovery contract](listing-discovery.md) for privacy, query and performance limits.

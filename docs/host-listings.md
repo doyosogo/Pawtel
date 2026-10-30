@@ -121,3 +121,10 @@ No Host frontend, public search/listing detail, images, maps, external email del
 bookings, availability, pricing calculation or payments exists. Verification tokens
 are exercised internally by tests; production endpoints do not expose them. Existing
 auth deployment/rate-limiting limitations still apply.
+
+## Milestone 6 follow-up
+
+Public PUBLISHED discovery/detail and advisory availability now exist through the
+separate [public API](listing-discovery.md). The private contracts above, including
+verified-user management gates, remain unchanged. Booking workflows and Host UI
+are still deferred.
