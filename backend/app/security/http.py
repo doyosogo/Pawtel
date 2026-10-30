@@ -51,7 +51,7 @@ class AuthHTTPMiddleware(BaseHTTPMiddleware):
             response = error_response(
                 500, "internal_error", "The request could not be completed."
             )
-        if request.url.path.startswith("/api/v1/auth"):
+        if request.url.path.startswith("/api/v1/"):
             self.no_store(response)
         return response
 

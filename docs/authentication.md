@@ -265,3 +265,12 @@ References: [Argon2-cffi API](https://argon2-cffi.readthedocs.io/en/stable/api.h
 [RFC 9106](https://www.rfc-editor.org/rfc/rfc9106.html),
 [OWASP password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html),
 [OWASP CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html).
+
+## Pet resource extension (Milestone 4)
+
+The Pet router reuses active_user and csrf_for_authenticated_requests for POST,
+PATCH and DELETE, permitting private profile preparation before email verification.
+CORS now permits PATCH/DELETE as well as GET/POST for exact configured origins.
+JSON/custom-header/Origin rules also apply to DELETE (send `{}`). All /api/v1
+responses, including private Pet reads, now use no-store headers. No auth policy,
+password/session format or frontend feature was changed. See [Pet Profiles](pet-profiles.md).

@@ -5,13 +5,12 @@ of dogs/cats and accommodation hosts. One account will support optional Host mod
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 3 — session authentication and verification persistence.**
-Implemented: the temporary React screen, relational domain schema, registration,
-Argon2id passwords, opaque cookie sessions, login/logout/self lookup, CSRF protection,
-verification-token issuance/consumption and PostgreSQL security tests. There is no
-external email delivery or public resend endpoint. Pet/listing APIs, host onboarding,
-booking workflows, capacity services, pricing and payments remain planned. The
-polished frontend authentication UI is also deferred.
+**Status: Milestone 4 — private owner-managed Pet Profiles.** Implemented: the
+existing authentication foundation and relational schema, plus owner-scoped pet
+create/list/get/update/soft-archive APIs. Profile preparation is allowed before email
+verification for active authenticated users. There is no frontend Pet screen/form,
+external email delivery or public resend endpoint. Listing APIs, host onboarding,
+booking/capacity/pricing/payment workflows and the polished UI remain deferred.
 
 ## Stack and layout
 
@@ -23,12 +22,12 @@ polished frontend authentication UI is also deferred.
 ```text
 frontend/src/app/       # Routing/providers
 frontend/src/pages/     # Temporary screen and smoke test
-backend/app/api/        # Health, versioned auth routes and safe errors
+backend/app/api/        # Health, versioned auth/pet routes and safe errors
 backend/app/core/       # Environment settings
 backend/app/db/         # Base metadata, lazy engine/session infrastructure
 backend/app/models/     # Domain and authentication persistence
-backend/app/schemas/    # Explicit auth input/output contracts
-backend/app/services/   # Transactional auth operations
+backend/app/schemas/    # Explicit auth and pet input/output contracts
+backend/app/services/   # Focused transactional auth/pet operations
 backend/app/security/   # Credentials, CSRF and permission dependencies
 backend/alembic/        # Migration environment and versioned schema
 backend/tests/          # Health/safety unit tests and PostgreSQL integration tests
@@ -42,7 +41,8 @@ See [product scope](docs/product-scope.md), [architecture](docs/architecture.md)
 [ADR 0001](docs/adr/0001-boarding-relational-model.md) and [engineering principles](docs/engineering-principles.md).
 See [authentication/security](docs/authentication.md), [ADR 0002](docs/adr/0002-opaque-session-authentication.md)
 and [authentication interview notes](docs/authentication-interview.md) for this milestone.
-Business services and schemas will be added only when those features are implemented.
+See [Pet Profiles and ownership](docs/pet-profiles.md) and
+[ADR 0003](docs/adr/0003-private-pet-ownership.md) for Milestone 4.
 
 ## Prerequisites
 
@@ -213,10 +213,26 @@ transactionally, but no email provider exposes/delivers that raw token yet. The
 integration tests exercise it through internal service helpers. Do not print or
 return secret tokens as a development shortcut.
 
+## Pet Profiles API
+
+All endpoints require a valid session and active account. Verified email is not
+required for private profile preparation; later marketplace actions will require it.
+POST `/api/v1/pets` creates an owned Pet; GET lists active own pets (optionally
+`?include_archived=true`); GET/PATCH/DELETE `/api/v1/pets/{pet_id}` operate only on
+that owner's Pet. DELETE archives rather than physically deleting. Foreign/missing
+valid UUIDs share 404 `pet_not_found`; malformed UUIDs return safe 422 validation errors.
+
+Writes require the existing JSON, `X-PAWTEL-Request: 1`, valid Origin when supplied,
+and session `X-CSRF-Token` protections. DELETE sends `{}`. Never send owner_id or
+other immutable fields in request JSON. No schema/index change or migration was
+needed; Alembic remains at `868589ec460a`. See the [Pet API contract](docs/pet-profiles.md)
+for validation, sparse PATCH, archived metadata edits and last-writer-wins limitations.
+No Pet management frontend exists yet.
+
 ## Deliberate limitations
 
 No email delivery, public resend endpoint, password reset, OAuth, MFA, polished auth
-UI or marketplace endpoints/workflows are implemented. Before public deployment,
+UI or listing/booking/payment workflows are implemented. Before public deployment,
 add rate limiting/credential-stuffing controls, email recovery/delivery, deployment
 hardening and session cleanup/retention. Current security tests reduce risk but do
 not establish timing immunity or complete production security.

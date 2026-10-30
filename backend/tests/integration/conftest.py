@@ -1,13 +1,21 @@
+import asyncio
 from pathlib import Path
+from typing import Annotated
 
 import pytest
 from alembic.config import Config
+from fastapi import Depends
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from alembic import command
 from app.core.config import Settings
+from app.db.session import get_session
+from app.main import create_app
+from app.models import User
+from app.security.dependencies import verified_user
 from tests.db_safety import checked_test_url
+from tests.integration.api_client import API
 
 
 @pytest.fixture(scope="session")
@@ -62,3 +70,60 @@ def db_session(db_engine):
         finally:
             session.close()
             transaction.rollback()
+
+
+@pytest.fixture
+def settings():
+    return Settings(
+        _env_file=None,
+        app_env="test",
+        session_cookie_secure=False,
+        backend_cors_origins=["http://localhost:5173"],
+    )
+
+
+@pytest.fixture
+def make_api(db_session, settings):
+    clients = []
+
+    def make(secure=False):
+        config = (
+            settings
+            if not secure
+            else Settings(
+                _env_file=None,
+                app_env="production",
+                session_cookie_secure=True,
+                backend_cors_origins=["https://app.example.com"],
+            )
+        )
+        app = create_app(config)
+
+        def request_db():
+            # Separate per-request Session, same rollback-protected connection.
+            with Session(
+                bind=db_session.get_bind(),
+                join_transaction_mode="create_savepoint",
+                expire_on_commit=False,
+            ) as session:
+                yield session
+
+        app.dependency_overrides[get_session] = request_db
+
+        # Test-only probe for a future permission dependency, never a product API.
+        @app.get("/api/v1/_test/verified")
+        def verified_probe(user: Annotated[User, Depends(verified_user)]):
+            return {"allowed": True}
+
+        api = API(app, config)
+        clients.append(api)
+        return api
+
+    yield make
+    for api in clients:
+        asyncio.run(api.client.aclose())
+
+
+@pytest.fixture
+def api(make_api):
+    return make_api()

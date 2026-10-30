@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.errors import install_error_handlers
 from app.api.health import router as health_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.pets import router as pets_router
 from app.core.config import Settings, get_settings
 from app.db.session import dispose_engine
 from app.security.http import AuthHTTPMiddleware
@@ -30,11 +31,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.backend_cors_origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PATCH", "DELETE"],
         allow_headers=["Content-Type", "X-PAWTEL-Request", "X-CSRF-Token"],
     )
     app.include_router(health_router)
     app.include_router(auth_router)
+    app.include_router(pets_router)
     return app
 
 

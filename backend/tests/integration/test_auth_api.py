@@ -1,123 +1,15 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
 
-import httpx
 import pytest
-from fastapi import Depends
 from sqlalchemy import event, select, update
-from sqlalchemy.orm import Session
 
-from app.core.config import Settings
-from app.db.session import get_session
-from app.main import create_app
 from app.models import AuthSession, EmailVerificationToken, User
 from app.security.credentials import new_token, token_digest, verify_password
-from app.security.dependencies import verified_user
 from app.services import auth as service
+from tests.integration.api_client import EMAIL, PASSWORD
 
 pytestmark = pytest.mark.integration
-PASSWORD = "a correct ordinary passphrase"
-EMAIL = "owner@example.com"
-
-
-class API:
-    def __init__(self, app, settings):
-        self.settings = settings
-        self.client = httpx.AsyncClient(
-            transport=httpx.ASGITransport(app=app, raise_app_exceptions=False),
-            base_url="https://api.example.com"
-            if settings.session_cookie_secure
-            else "http://testserver",
-            headers={
-                "X-PAWTEL-Request": "1",
-                "Origin": settings.backend_cors_origins[0],
-            },
-        )
-
-    def get(self, path, **kwargs):
-        return asyncio.run(self.client.get("/api/v1/auth" + path, **kwargs))
-
-    def post(self, path, data=None, **kwargs):
-        return asyncio.run(
-            self.client.post("/api/v1/auth" + path, json=data or {}, **kwargs)
-        )
-
-    def register(self, **overrides):
-        return self.post(
-            "/register",
-            {
-                "email": EMAIL,
-                "display_name": "Owner",
-                "password": PASSWORD,
-                **overrides,
-            },
-        )
-
-    def login(self, **kwargs):
-        return self.post("/login", {"email": EMAIL, "password": PASSWORD}, **kwargs)
-
-    def csrf(self):
-        response = self.get("/csrf")
-        assert response.status_code == 200
-        return {"X-CSRF-Token": response.json()["csrf_token"]}
-
-
-@pytest.fixture
-def settings():
-    return Settings(
-        _env_file=None,
-        app_env="test",
-        session_cookie_secure=False,
-        backend_cors_origins=["http://localhost:5173"],
-    )
-
-
-@pytest.fixture
-def make_api(db_session, settings):
-    clients = []
-
-    def make(secure=False):
-        config = (
-            settings
-            if not secure
-            else Settings(
-                _env_file=None,
-                app_env="production",
-                session_cookie_secure=True,
-                backend_cors_origins=["https://app.example.com"],
-            )
-        )
-        app = create_app(config)
-
-        def request_db():
-            # Separate per-request Session, same rollback-protected connection.
-            with Session(
-                bind=db_session.get_bind(),
-                join_transaction_mode="create_savepoint",
-                expire_on_commit=False,
-            ) as session:
-                yield session
-
-        app.dependency_overrides[get_session] = request_db
-
-        # Test-only probe for a future permission dependency, never a product API.
-        @app.get("/api/v1/_test/verified")
-        def verified_probe(user: Annotated[User, Depends(verified_user)]):
-            return {"allowed": True}
-
-        api = API(app, config)
-        clients.append(api)
-        return api
-
-    yield make
-    for api in clients:
-        asyncio.run(api.client.aclose())
-
-
-@pytest.fixture
-def api(make_api):
-    return make_api()
 
 
 @pytest.fixture

@@ -18,3 +18,7 @@ Milestone 2 implements relational persistence and records a proposed booking/con
 design. Milestone 3 implements authentication and verification persistence/services.
 Booking services, real email delivery and payment processing remain future work.
 Database constraints alone do not claim to implement those workflows.
+
+Milestone 4 applies backend ownership enforcement to private Pet Profiles through
+owner-scoped SQL reads and writes, safe response schemas and cross-user integration
+tests. A valid foreign key is not proof that the HTTP caller owns the referenced row.

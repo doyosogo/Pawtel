@@ -23,6 +23,10 @@ The architecture should accommodate daycare, house sitting, drop-in visits, and 
 Milestone 2 added PostgreSQL/domain persistence. Milestone 3 adds password registration,
 opaque sessions, login/logout/self, CSRF and email-verification persistence/consumption.
 External email delivery, public resend, password reset, OAuth, the polished auth UI,
-Host-mode enablement, pet/listing CRUD APIs, booking workflows, pricing, payments,
+Host-mode enablement, listing APIs, booking workflows, pricing, payments,
 messaging, dashboards, search, maps, reviews and seed data remain deferred. Existing
 domain models do not imply working marketplace features. No admin feature exists.
+
+Milestone 4 implements private owner-managed Pet Profile APIs (create/list/get/PATCH/
+soft archive), including pre-verification setup for active users. No Pet frontend,
+medical/vaccination/image data, restore feature or host-review access was added.

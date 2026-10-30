@@ -151,7 +151,8 @@ an extension dependency.
 A Pet belongs to exactly one User. DOG and CAT are the only species. Breed and date
 of birth are optional; a date does not drift like a stored age. Size, weight, medical
 information and images are deferred. `is_active` allows archiving without deleting
-booked pets. Future validation must reject impossible dates of birth.
+booked pets. Milestone 4 API validation rejects impossible/future dates of birth; direct SQL
+is not given the HTTP caller authorisation or that time-dependent input rule.
 
 Listing holds suburb, Australian state/territory, a four-character numeric postcode
 and country code AU. Postcodes are text to preserve leading zeroes. These fields
@@ -420,3 +421,13 @@ itself. Explicit safe response schemas keep hashes/digests out of JSON. See
 [authentication design](authentication.md) for complete cookie, token, transaction,
 error and delivery semantics. Existing domain deletion/booking constraints remain
 unchanged; authentication dependencies do not implement marketplace authorisation.
+
+## Pet Profiles API (Milestone 4)
+
+The existing Pet table, owner_id index, enum and timestamp defaults are unchanged.
+No third migration was created. Owner-only HTTP access is enforced by active-user
+authentication and owner-scoped SQL in the Pet service, not by the owner foreign key.
+DELETE sets is_active=false and preserves references. The API exposes no ownership
+transfer or restore field. See [Pet API semantics](pet-profiles.md) for validation,
+privacy and current concurrent-update limitations. The schema remains at revision
+868589ec460a and no new performance claim is made for the existing indexes.
