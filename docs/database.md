@@ -1,14 +1,16 @@
 # Database: boarding MVP persistence
 
-Milestone 2 implements persistence, not usable marketplace workflows. PostgreSQL 18
-is the database; Python 3.14, typed SQLAlchemy 2 models and Alembic own the schema.
-No authentication, booking, pricing or payment API exists. Every listing represents
+Milestone 2 introduced domain persistence; Milestone 3 adds authentication persistence
+and services. PostgreSQL 18 is the database; Python 3.14, typed SQLAlchemy 2 models and Alembic own the schema.
+Authentication endpoints now exist; booking, pricing and payment APIs do not. Every listing represents
 boarding. Other service types are intentionally absent.
 
 ## Entity relationship diagram
 
 ```mermaid
 erDiagram
+    users ||--o{ auth_sessions : authenticates
+    users ||--o| email_verification_tokens : "latest verification capability"
     users ||--o| host_profiles : "optionally enables Host mode"
     users ||--o{ pets : owns
     host_profiles ||--o{ listings : hosts
@@ -22,10 +24,29 @@ erDiagram
         uuid id PK
         varchar email UK
         varchar display_name
+        text password_hash "nullable for legacy accounts"
         timestamptz email_verified_at "nullable"
         boolean is_active
         timestamptz created_at
         timestamptz updated_at
+    }
+    auth_sessions {
+        uuid id PK
+        uuid user_id FK
+        varchar token_digest UK
+        varchar csrf_token
+        timestamptz created_at
+        timestamptz expires_at
+        timestamptz revoked_at "nullable"
+    }
+    email_verification_tokens {
+        uuid id PK
+        uuid user_id FK,UK
+        varchar email
+        varchar token_digest UK
+        timestamptz created_at
+        timestamptz expires_at
+        timestamptz consumed_at "nullable"
     }
     host_profiles {
         uuid user_id PK,FK
@@ -89,7 +110,7 @@ erDiagram
 The diagram shows physical cardinalities: a booking can physically have zero pets,
 and a listing zero accepted species. Later services must require at least one at
 request/publication time. Database nullability and Python types match. There are
-seven domain tables, plus Alembic's version table.
+nine application tables, plus Alembic's version table.
 
 ## Account and profile decisions
 
@@ -97,10 +118,11 @@ User is the single account. HostProfile uses `user_id` as both its UUID primary 
 and its foreign key to User. This enforces at most one host profile per account and
 lets a listing reference an actual host, not just an arbitrary user. Absence of a
 HostProfile means Host mode has not been enabled. Minimal bio data is optional.
-There is no separate host login, role enum, password column or authentication code.
+There is no separate host login or role enum. Milestone 3 adds a nullable password_hash
+and dedicated authentication tables; legacy null hashes cannot password-login.
 
-`email_verified_at` records successful verification, initially null. Challenge
-tokens, expiry and resend handling belong to the authentication milestone.
+`email_verified_at` records successful verification, initially null. Milestone 3
+persists expiring, hashed verification capabilities with one latest row per user; real delivery and public resend remain deferred.
 A future email change must clear verification and require verification again; the
 timestamp alone is not an authentication implementation. `is_active` supports
 disabling an account without deleting historical references.
@@ -111,17 +133,16 @@ personal data are not collected.
 
 SQLAlchemy's email assignment validator strips surrounding whitespace and lowercases
 the address. PostgreSQL additionally requires `email = lower(btrim(email))` and a
-nonempty, whitespace-free value, and enforces a unique constraint on that canonical stored value.
+nonempty, whitespace-free value, and enforces a unique constraint on that canonical
+stored value.
 Thus direct SQL cannot insert mixed-case/space-padded alternatives to evade
 uniqueness: it must first normalise or be rejected. The unique constraint is the
 concurrency-safe authority, not a pre-insert Python lookup.
 
 This deliberately treats the whole address case-insensitively for PAWTEL accounts.
 It is not complete email syntax/deliverability validation. Internationalised email
-and IDNA policy, including differences between Python and database Unicode casing,
-must be settled before authentication; PostgreSQL's check will reject an ORM result
-that is not canonical under its own lowercase rules. Email verification is not
-implemented. CITEXT and a functional unique index were considered; a canonical
+and IDNA support are currently restricted to ASCII by auth API validation. PostgreSQL
+rejects an ORM result that is not canonical under its own lowercase rules. Verification persistence and consumption are implemented; external delivery is not. CITEXT and a functional unique index were considered; a canonical
 stored value plus ordinary uniqueness keeps the current design explicit and avoids
 an extension dependency.
 
@@ -190,7 +211,7 @@ history tables or claims of a complete audit trail.
 - AWAITING_PAYMENT has a non-null payment deadline.
 - Unique listing/species and booking/pet pairs via composite primary keys.
 
-PostgreSQL does **not** yet enforce legal booking transitions, eligibility/permissions,
+PostgreSQL does **not** by itself enforce legal booking transitions or actor permissions,
 pet ownership matching a booking, species compatibility, at least one booking pet,
 capacity/overlap correctness, active/published status, self-booking restrictions,
 price formulas or payment authenticity. These require transactional services and
@@ -198,10 +219,12 @@ future integration tests. No workflow should be inferred from inserting rows.
 
 ## Foreign key deletion policy
 
-All parent references use RESTRICT, except child associations:
+Business parent references use RESTRICT. Dependent association and credential rows
+use CASCADE as follows:
 
 | Reference | On delete | Reason |
 |---|---|---|
+| AuthSession / EmailVerificationToken to User | CASCADE | Credentials have no meaning without their account. |
 | HostProfile to User | RESTRICT | Do not silently remove a host identity. |
 | Pet to User | RESTRICT | Preserve owned profile references. |
 | Listing to HostProfile | RESTRICT | Preserve host/listing ownership. |
@@ -223,6 +246,8 @@ indexes are intentionally limited to these anticipated access paths:
 
 | Index | Intended query/use |
 |---|---|
+| `ix_auth_sessions_user_id` | Per-user session lookup/revocation support. |
+| `ix_auth_sessions_expires_at` | Future expiry cleanup candidates; no cleanup job implemented. |
 | `ix_pets_owner_id` | Owner's pets and owner FK lookups. |
 | `ix_listings_host_id` | Host's listings and host FK lookups. |
 | `ix_bookings_owner_id` | Owner's booking history. |
@@ -371,3 +396,27 @@ and **no domain rows**, refuses a populated database, downgrades only pawtel_tes
 base, checks enum cleanup, and upgrades it again in a finally block. It never
 downgrades pawtel_dev. Do not run parallel pytest workers against the same database;
 this milestone intentionally uses one local test process.
+
+## Authentication schema extension (Milestone 3)
+
+New revision `868589ec460a` follows the unchanged committed `6667e668c806`. It adds
+users.password_hash and auth_sessions/email_verification_tokens; downgrade removes
+only these additions before an optional full test-database round trip to base.
+The guarded migration test also inserts a legacy user at the M2 revision, upgrades,
+and proves its null password remains null rather than receiving a fabricated hash.
+
+AuthSession has a unique 64-character digest, a distinct readable CSRF nonce, creation/
+expiry/revocation times, a user FK and user/expiry indexes. EmailVerificationToken
+has unique digest and user_id constraints, a target-email snapshot and creation/
+expiry/consumption times. Both have UUID keys and cascading User FKs. Check constraints
+validate digest/nonce shapes, expiry ordering and optional consumption/revocation
+ordering. User's password CHECK allows null or an Argon2id prefix; the library, not
+that prefix check, validates full hash encodings. There are now 26 CHECK constraints,
+10 foreign keys and seven additional non-unique indexes across nine application tables.
+
+Raw passwords and raw session/verification credentials are never database columns.
+The synchronizer CSRF nonce is deliberately readable but cannot authenticate by
+itself. Explicit safe response schemas keep hashes/digests out of JSON. See
+[authentication design](authentication.md) for complete cookie, token, transaction,
+error and delivery semantics. Existing domain deletion/booking constraints remain
+unchanged; authentication dependencies do not implement marketplace authorisation.

@@ -19,6 +19,7 @@ from app.db.base import Base
 from app.models.common import Timestamps, UUIDPrimaryKey
 
 if TYPE_CHECKING:
+    from app.models.auth import AuthSession, EmailVerificationToken
     from app.models.bookings import Booking
     from app.models.listings import Listing
     from app.models.pets import Pet
@@ -31,10 +32,15 @@ class User(UUIDPrimaryKey, Timestamps, Base):
             "email = lower(btrim(email)) AND email <> '' AND email !~ '[[:space:]]'",
             name="email_normalized",
         ),
+        CheckConstraint(
+            "password_hash IS NULL OR password_hash LIKE '$argon2id$%'",
+            name="password_hash_algorithm",
+        ),
         CheckConstraint("btrim(display_name) <> ''", name="display_name_not_blank"),
     )
 
     email: Mapped[str] = mapped_column(String(254), unique=True)
+    password_hash: Mapped[str | None] = mapped_column(Text)
     display_name: Mapped[str] = mapped_column(String(100))
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
@@ -47,6 +53,13 @@ class User(UUIDPrimaryKey, Timestamps, Base):
     )
     bookings: Mapped[list[Booking]] = relationship(
         back_populates="owner", passive_deletes="all"
+    )
+
+    auth_sessions: Mapped[list[AuthSession]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", passive_deletes=True
+    )
+    email_verification_token: Mapped[EmailVerificationToken | None] = relationship(
+        back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
 
     @validates("email")

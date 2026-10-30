@@ -20,4 +20,9 @@ The architecture should accommodate daycare, house sitting, drop-in visits, and 
 
 ## Explicitly deferred functionality
 
-Milestone 2 adds local PostgreSQL, relational models, migrations and database tests only. Authentication/email-verification workflows, Host-mode enablement APIs, pet/listing CRUD APIs, booking workflows, pricing, payments, messaging, dashboards, search, maps, reviews, and seed data are not implemented. Domain persistence now exists; domain API endpoints and workflows remain deferred. External integrations are also deferred. An admin panel is outside this milestone.
+Milestone 2 added PostgreSQL/domain persistence. Milestone 3 adds password registration,
+opaque sessions, login/logout/self, CSRF and email-verification persistence/consumption.
+External email delivery, public resend, password reset, OAuth, the polished auth UI,
+Host-mode enablement, pet/listing CRUD APIs, booking workflows, pricing, payments,
+messaging, dashboards, search, maps, reviews and seed data remain deferred. Existing
+domain models do not imply working marketplace features. No admin feature exists.

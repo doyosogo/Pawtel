@@ -14,4 +14,7 @@ PAWTEL aims to demonstrate maintainable software through complete end-to-end wor
 - Keep responsibilities clear, files reasonably small and architecture proportional to a finishable project.
 - Document limitations honestly, including planned capabilities that are not implemented.
 
-Milestone 2 implements relational persistence and records a proposed booking/concurrency design. Authentication, booking services and payment processing remain future milestones. Database constraints alone do not claim to implement those workflows.
+Milestone 2 implements relational persistence and records a proposed booking/concurrency
+design. Milestone 3 implements authentication and verification persistence/services.
+Booking services, real email delivery and payment processing remain future work.
+Database constraints alone do not claim to implement those workflows.

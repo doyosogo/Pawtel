@@ -13,7 +13,7 @@ def get_engine() -> Engine:
     url = get_settings().database_url
     if url is None:
         raise RuntimeError("Set DATABASE_URL before using database operations.")
-    return create_engine(str(url), pool_pre_ping=True)
+    return create_engine(str(url), pool_pre_ping=True, hide_parameters=True)
 
 
 def dispose_engine() -> None:
@@ -23,5 +23,5 @@ def dispose_engine() -> None:
 
 
 def get_session() -> Iterator[Session]:
-    with Session(get_engine()) as session:
+    with Session(get_engine(), expire_on_commit=False) as session:
         yield session

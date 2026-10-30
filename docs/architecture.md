@@ -15,10 +15,10 @@ PostgreSQL 18
 The independently runnable frontend uses Vite, Tailwind, React Router and a TanStack
 Query provider. Zustand is installed for future client state. src/app composes
 providers/routing, src/pages holds the temporary screen and src/test owns test setup.
-No marketplace UI or domain API calls have been built. Future features can live
+No marketplace or polished authentication UI has been built. Future features can live
 under src/features when real requirements exist.
 
-FastAPI app/main.py owns lifespan/CORS and exposes only /health beyond framework
+FastAPI app/main.py owns lifespan/CORS and preserves /health and exposes versioned /api/v1/auth routes beyond framework
 documentation. app/core reads root .env and environment overrides. app/db owns named
 metadata, a lazy engine and per-operation sessions. Startup and health do not create
 an engine or require PostgreSQL. Sessions clean up resources but future services
@@ -28,8 +28,9 @@ app/models contains typed account, pet, listing and booking persistence models, 
 common UUID/timestamp mixins and native enum declarations. An explicit registry in
 app/models/__init__.py imports every model; Alembic imports it for complete metadata.
 TYPE_CHECKING imports and SQLAlchemy forward relationships avoid runtime model
-import cycles. These are database models, not Pydantic API schemas. Models are not
-exposed through CRUD/booking/authentication endpoints.
+import cycles. These are database models, not Pydantic API schemas. Domain models are not
+exposed through marketplace CRUD/booking endpoints. Authentication uses explicit
+Pydantic input/output schemas, not general ORM serialization.
 
 Alembic owns schema creation and versioning. The initial migration is independent
 of mutable model definitions and owns native enum creation/removal. There is no
@@ -40,10 +41,11 @@ See [database design/setup](database.md) for the ERD and exact constraints.
 
 ## Planned service boundaries
 
-Future schemas will validate API input/output. Future services will enforce actor
-permissions, booking transitions, ownership, server-side pricing and capacity inside
-transactions. A future security package will handle authentication/authorisation.
-These packages are not created empty for appearance. A user can optionally host
+app/schemas now validates auth input/output; app/services/auth owns transactional
+registration/session/verification operations. app/security owns Argon2id, random
+credentials, request/CSRF checks and identity/active/verified dependencies. Safe
+application errors are defined in app/api/errors. Future business services must
+add ownership, booking transitions, pricing and capacity transaction rules. A user can optionally host
 through a shared-key HostProfile, without a second account model.
 
 The [booking state machine](booking-state-machine.md) proposes locking the listing
@@ -61,3 +63,13 @@ run while holding a reservation transaction's database locks.
 Only explicit local CORS origins are allowed. Credentials remain server-side;
 VITE_ variables are public and must never contain secrets. The local migration-owner
 roles are appropriate for this milestone, not a substitute for deployment hardening.
+
+## Authentication boundary
+
+Opaque sessions use PostgreSQL rather than JWT/Redis. HttpOnly cookies carry raw
+random credentials; database lookup uses SHA-256 digests. Argon2id stores passwords.
+Credentialed CORS is exact-origin, and auth POSTs combine JSON/custom-header/Origin
+checks with a session synchronizer nonce when authenticated. Registration and email
+verification use explicit atomic transactions. Email delivery remains deferred.
+See [ADR 0002](adr/0002-opaque-session-authentication.md) and
+[authentication/security](authentication.md) for actual semantics and limitations.

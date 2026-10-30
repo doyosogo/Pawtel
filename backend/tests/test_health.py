@@ -5,7 +5,7 @@ from sqlalchemy import Engine
 
 from app.core.config import Settings, get_settings
 from app.db.session import get_engine
-from app.main import app
+from app.main import app, create_app
 
 
 def test_health_without_database(monkeypatch):
@@ -35,6 +35,15 @@ def test_health_without_database(monkeypatch):
 
 
 def test_frontend_cors():
+    app = create_app(
+        Settings(
+            _env_file=None,
+            app_env="test",
+            session_cookie_secure=False,
+            backend_cors_origins=["http://localhost:5173"],
+        )
+    )
+
     async def check():
         async with app.router.lifespan_context(app):
             async with AsyncClient(

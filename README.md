@@ -5,11 +5,13 @@ of dogs/cats and accommodation hosts. One account will support optional Host mod
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 2 — PostgreSQL and relational persistence.** Implemented: a
-temporary React screen, FastAPI settings/CORS/health, seven relational domain tables,
-the first Alembic migration and real PostgreSQL integration tests. Authentication,
-booking workflows, capacity handling, price calculation and payments are **planned,
-not implemented**. No marketplace endpoints or final frontend UI exist yet.
+**Status: Milestone 3 — session authentication and verification persistence.**
+Implemented: the temporary React screen, relational domain schema, registration,
+Argon2id passwords, opaque cookie sessions, login/logout/self lookup, CSRF protection,
+verification-token issuance/consumption and PostgreSQL security tests. There is no
+external email delivery or public resend endpoint. Pet/listing APIs, host onboarding,
+booking workflows, capacity services, pricing and payments remain planned. The
+polished frontend authentication UI is also deferred.
 
 ## Stack and layout
 
@@ -21,10 +23,13 @@ not implemented**. No marketplace endpoints or final frontend UI exist yet.
 ```text
 frontend/src/app/       # Routing/providers
 frontend/src/pages/     # Temporary screen and smoke test
-backend/app/api/        # Health endpoint only
+backend/app/api/        # Health, versioned auth routes and safe errors
 backend/app/core/       # Environment settings
 backend/app/db/         # Base metadata, lazy engine/session infrastructure
-backend/app/models/     # Typed relational models, separate from future API schemas
+backend/app/models/     # Domain and authentication persistence
+backend/app/schemas/    # Explicit auth input/output contracts
+backend/app/services/   # Transactional auth operations
+backend/app/security/   # Credentials, CSRF and permission dependencies
 backend/alembic/        # Migration environment and versioned schema
 backend/tests/          # Health/safety unit tests and PostgreSQL integration tests
 backend/.venv/          # Ignored local Python environment
@@ -35,7 +40,9 @@ docs/                  # Scope, architecture, database ERD, state design, ADR
 See [product scope](docs/product-scope.md), [architecture](docs/architecture.md),
 [database design and macOS setup](docs/database.md), [booking state machine](docs/booking-state-machine.md),
 [ADR 0001](docs/adr/0001-boarding-relational-model.md) and [engineering principles](docs/engineering-principles.md).
-Future API schemas, services and security packages will be introduced when needed.
+See [authentication/security](docs/authentication.md), [ADR 0002](docs/adr/0002-opaque-session-authentication.md)
+and [authentication interview notes](docs/authentication-interview.md) for this milestone.
+Business services and schemas will be added only when those features are implemented.
 
 ## Prerequisites
 
@@ -50,7 +57,8 @@ packages, generated on macOS ARM64/Python 3.14.8 with
 `python -m pip freeze --exclude pawtel-backend`. It excludes the editable project
 and local paths, has no hashes and is not a universal cross-platform resolver lock.
 Update dependencies deliberately in a clean environment and rerun checks before
-regenerating it. No Python dependency changes were needed for this milestone.
+regenerating it. Milestone 3 adds argon2-cffi and email-validator plus their required
+transitive packages; earlier pins are unchanged.
 TypeScript 6 satisfies the current typescript-eslint support range; jsdom 29 supports
 the verified Node runtime. Zustand is installed without an artificial store.
 
@@ -101,8 +109,11 @@ frontend VITE_ variables, which are public.
 
 Pydantic Settings reads root .env regardless of the backend working directory.
 Environment variables override file values. BACKEND_CORS_ORIGINS is a JSON array,
-defaulting to `["http://localhost:5173"]`. Startup and health work without either
-database URL; migration/database operations require their appropriate URL.
+configured as `["http://localhost:5173"]` for local development. The code defaults
+to no allowed origins, APP_ENV=production and Secure cookies. The local .env example
+explicitly chooses APP_ENV=development and SESSION_COOKIE_SECURE=false for HTTP.
+Production rejects insecure cookies and non-HTTPS origins. Startup/health work
+without database URLs; authentication and migrations need their configured database.
 
 ## Backend setup, migrate and run
 
@@ -183,12 +194,35 @@ npm run format:check
 
 `npm run preview` serves the build; `npm run format` formats source.
 
+## Exercise authentication locally
+
+After applying migrations and starting Uvicorn, follow the
+[local HTTPX example](docs/authentication.md#local-exercise-no-credentials-printed).
+It prompts for a password without printing it, exercises registration/login/me/logout
+and keeps the cookie only in memory. All auth POSTs require JSON and
+`X-PAWTEL-Request: 1`. Authenticated POSTs also require the session nonce obtained
+through GET `/api/v1/auth/csrf`, supplied in `X-CSRF-Token`. Browser fetch calls must
+use `credentials: 'include'` and the configured exact frontend Origin.
+
+Registration returns 201 with a safe User and `verification_delivery: "not_configured"`.
+Login returns 200, sets the HttpOnly cookie and permits an unverified active user to
+hold a limited session. GET `/api/v1/auth/me` returns only safe self fields. Logout
+revokes only the current session and clears the cookie; repeated unauthenticated
+logout returns 204. POST `/api/v1/auth/verify-email` consumes a valid capability
+transactionally, but no email provider exposes/delivers that raw token yet. The
+integration tests exercise it through internal service helpers. Do not print or
+return secret tokens as a development shortcut.
+
 ## Deliberate limitations
 
-Models and constraints are not complete product features. The database does not yet
-enforce pet/booking ownership matching, legal state transitions, per-night capacity,
-price formulas, permissions or payment verification. Those transactional services,
-meaningful concurrency tests and external integrations belong to later milestones.
-Search, messaging, reviews, maps, notifications, image storage and admin functionality
-are also deferred. There is no claim of measured index performance or production
-runtime/migration-role separation yet.
+No email delivery, public resend endpoint, password reset, OAuth, MFA, polished auth
+UI or marketplace endpoints/workflows are implemented. Before public deployment,
+add rate limiting/credential-stuffing controls, email recovery/delivery, deployment
+hardening and session cleanup/retention. Current security tests reduce risk but do
+not establish timing immunity or complete production security.
+
+Domain constraints still do not enforce per-night capacity, booking state transitions,
+pet/booking owner matching or pricing formulas. Those belong to later transactional
+services and concurrency tests. Search, messaging, reviews, maps, notifications,
+images and admin functionality also remain deferred. There is no measured index
+performance claim or production runtime/migration-role separation yet.
