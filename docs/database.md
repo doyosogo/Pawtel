@@ -443,3 +443,13 @@ Verified-email/HTTP ownership and publication readiness are application rules, n
 foreign-key guarantees. See [Host/Listing API](host-listings.md) for atomic species
 replacement, private-resource 404 policy and archive semantics. Schema revision is
 still 868589ec460a.
+
+## Pre-payment Booking service (Milestone 7)
+
+The existing Booking/BookingPet schema supports server-priced request snapshots and
+Listing-row-coordinated acceptance/release without a migration or new index.
+Database constraints are unchanged; HTTP ownership, Pet eligibility, state transitions,
+pricing and aggregate capacity are transactional application rules. Listing capacity
+edits now reject reductions below reserved peak occupancy. See [Booking service](bookings.md)
+and [ADR 0006](adr/0006-listing-locks-and-booking-quotes.md). Payments and automatic
+expiry/completion remain deferred; schema revision remains 868589ec460a.

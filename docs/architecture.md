@@ -31,7 +31,8 @@ TYPE_CHECKING imports and SQLAlchemy forward relationships avoid runtime model
 import cycles. These are database models, not Pydantic API schemas. Pet Profiles
 are exposed only through owner-scoped services. Listings now have private verified-host
 management APIs; Milestone 6 adds published-only public browsing and advisory
-availability. Booking workflows remain deferred. Authentication uses explicit
+availability. Milestone 7 adds pre-payment Booking workflows; payment handling
+remains deferred. Authentication uses explicit
 Pydantic input/output schemas, not general ORM serialization.
 
 Alembic owns schema creation and versioning. The initial migration is independent
@@ -104,3 +105,15 @@ remain unchanged. A focused discovery service builds filtered, paginated SQL wit
 joined relationships and a booking-boundary event sweep for advisory occupancy.
 No schema/index migration or reservation workflow was added. See
 [discovery contract](listing-discovery.md) for privacy, query and performance limits.
+
+## Transactional bookings (Milestone 7)
+
+Thin verified-user routes call a focused Booking service and exact pricing helper.
+Creation atomically persists requests/associations/quotes. Acceptance, decline and
+Owner cancellation coordinate on Listing then Booking row locks at READ COMMITTED.
+Per-night occupancy reuses the discovery event sweep, restricted to the Listing;
+public availability stays lock-free and advisory. Existing Listing capacity edits
+now reject reductions below reserved occupancy under their parent write lock.
+Separate-connection PostgreSQL tests observe actual blocking and prove one final-space
+winner. No new migration, infrastructure or payment integration was introduced.
+See [Booking design](bookings.md) and ADR 0006 for boundaries and limitations.

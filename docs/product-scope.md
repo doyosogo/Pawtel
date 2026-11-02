@@ -23,7 +23,7 @@ The architecture should accommodate daycare, house sitting, drop-in visits, and 
 Milestone 2 added PostgreSQL/domain persistence. Milestone 3 adds password registration,
 opaque sessions, login/logout/self, CSRF and email-verification persistence/consumption.
 External email delivery, public resend, password reset, OAuth, the polished auth UI,
-booking workflows, authoritative quote calculation, payments,
+payment workflows, automatic expiry/completion, confirmed cancellations/refunds,
 messaging, dashboards, ranked/geospatial search, maps, reviews and seed data remain deferred. Existing
 domain models do not imply working marketplace features. No admin feature exists.
 
@@ -39,5 +39,11 @@ images and geocoding remain deferred.
 
 Milestone 6 implements public PUBLISHED discovery/detail, textual filters, pagination
 and advisory per-night capacity. Public browsing is now available as an API only;
-ranking, geocoding, images and the search frontend remain deferred. No booking
-creation/acceptance or reservation guarantees are implemented.
+ranking, geocoding, images and the search frontend remain deferred. That milestone
+did not implement booking creation/acceptance; Milestone 7 below adds them.
+
+Milestone 7 implements verified Owner requests with server-priced snapshots, private
+Owner/Host review, Host accept/decline and Owner pre-payment cancellation. Acceptance
+rechecks capacity under PostgreSQL Listing-row locking and ends at AWAITING_PAYMENT.
+Payments, expiry, confirmed cancellations/refunds, completion and booking UI remain
+deferred. Public availability remains advisory, not a reservation.

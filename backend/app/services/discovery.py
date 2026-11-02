@@ -16,7 +16,7 @@ from app.schemas.discovery import (
 )
 
 
-def peak_occupancy(stay: StayQuery):
+def peak_occupancy(stay: StayQuery, listing_id=None):
     # Count association rows once per overlapping reserving booking. Clip intervals
     # to the requested stay, then sweep their +/- pet-count events by date.
     stays = (
@@ -31,6 +31,7 @@ def peak_occupancy(stay: StayQuery):
             Booking.status.in_(
                 [BookingStatus.AWAITING_PAYMENT, BookingStatus.CONFIRMED]
             ),
+            *([Booking.listing_id == listing_id] if listing_id is not None else []),
             Booking.start_date < stay.check_out,
             Booking.end_date > stay.check_in,
         )

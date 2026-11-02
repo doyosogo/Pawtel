@@ -28,7 +28,7 @@ def db_engine():
         )
     except ValueError as error:
         pytest.fail(str(error), pytrace=False)
-    engine = create_engine(url, hide_parameters=True)
+    engine = create_engine(url, hide_parameters=True, isolation_level="READ COMMITTED")
     try:
         with engine.connect() as connection:
             identity = connection.execute(

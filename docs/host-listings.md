@@ -128,3 +128,11 @@ Public PUBLISHED discovery/detail and advisory availability now exist through th
 separate [public API](listing-discovery.md). The private contracts above, including
 verified-user management gates, remain unchanged. Booking workflows and Host UI
 are still deferred.
+
+## Milestone 7 capacity protection
+
+Once bookings reserve capacity, a capacity edit below the existing reserved peak
+returns 409 listing_capacity_reserved and rolls back the full Listing update. The
+existing parent UPDATE coordinates with Booking acceptance's Listing lock. Archive
+preserves reservations but blocks new requests/acceptance; Owner cancellation still
+releases them. See [Booking protocol](bookings.md).

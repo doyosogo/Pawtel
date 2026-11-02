@@ -5,11 +5,12 @@ of dogs/cats and accommodation hosts. One account will support optional Host mod
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 6 — public discovery and advisory availability.** Implemented:
+**Status: Milestone 7 — transactional pre-payment bookings.** Implemented:
 registration/session authentication, private Pet Profiles, optional Host mode and
 verified-host Listing configuration, plus published-only public discovery/detail and
-date-aware capacity snapshots. Public reads do not reserve capacity. No Host/Pet frontend, external email
-delivery, booking/availability/quote/payment workflow or polished UI exists yet.
+date-aware capacity snapshots. Owners can request stays with server-priced quotes;
+Hosts accept/decline, and Owners cancel before payment. Acceptance reserves capacity
+transactionally. No payment integration, external email delivery or polished UI exists.
 
 ## Stack and layout
 
@@ -231,14 +232,14 @@ No Pet management frontend exists yet.
 ## Deliberate limitations
 
 No email delivery, public resend endpoint, password reset, OAuth, MFA, polished auth
-UI or booking/payment workflows are implemented. Before public deployment,
+UI or payment workflows are implemented. Before public deployment,
 add rate limiting/credential-stuffing controls, email recovery/delivery, deployment
 hardening and session cleanup/retention. Current security tests reduce risk but do
 not establish timing immunity or complete production security.
 
-Domain constraints still do not enforce per-night capacity, booking state transitions,
-pet/booking owner matching or pricing formulas. Those belong to later transactional
-services and concurrency tests. Ranked/geospatial search, messaging, reviews, maps, notifications,
+Domain constraints alone do not enforce per-night capacity, booking transitions,
+pet ownership or pricing formulas. Milestone 7 services enforce these for pre-payment
+requests/actions; future payment transitions must follow the same protocol. Ranked/geospatial search, messaging, reviews, maps, notifications,
 images and admin functionality also remain deferred. There is no measured index
 performance claim or production runtime/migration-role separation yet.
 
@@ -269,6 +270,24 @@ published details and safe Host display information. GET
 returns advisory remaining capacity. Dates in collection search require pet_count too.
 No authentication/CSRF is required for these read-only endpoints. Draft/archived/missing
 records share public 404. Availability is NOT a reservation; acceptance must recheck
-transactionally later. No booking API or frontend was added. See
+transactionally later. Milestone 7 adds the separate pre-payment Booking API; no frontend was added. See
 [discovery contract](docs/listing-discovery.md) and
 [ADR 0005](docs/adr/0005-advisory-public-availability.md).
+
+## Booking requests before payment (Milestone 7)
+
+Verified active Owners can POST `/api/v1/bookings` with listing_id, distinct owned
+pet_ids and check_in/check_out. The server validates published visibility, pets,
+species, UTC dates and advisory capacity, calculates integer-cent prices plus a
+10% HALF-UP fee, and stores immutable request snapshots. REQUESTED reserves nothing.
+Owner GET collection/detail and POST `/{id}/cancel` are private. Verified Hosts GET
+`/api/v1/host/bookings` and detail, then POST `/{id}/accept` or `/decline`.
+
+Acceptance locks Listing then Booking and rechecks per-night capacity before
+AWAITING_PAYMENT; simultaneous last-space acceptances cannot both succeed through
+this service. Cancellation releases holds under that same protocol. Configure
+BOOKING_PAYMENT_WINDOW_SECONDS (default 1800); overdue holds still reserve until an
+explicit future expiry transition. No Stripe/payment-success/expiry scheduler exists.
+All writes use existing CSRF/request protections. Creation is not idempotent: do not
+blindly retry unknown outcomes. See [Booking contracts](docs/bookings.md) and
+[ADR 0006](docs/adr/0006-listing-locks-and-booking-quotes.md). No migration was needed.

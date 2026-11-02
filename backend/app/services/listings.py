@@ -7,6 +7,7 @@ from app.api.errors import APIError
 from app.models import Listing, ListingAcceptedSpecies
 from app.models.enums import ListingStatus, PetSpecies
 from app.schemas.host import ListingCreate, ListingPatch
+from app.services.bookings import ensure_capacity_floor
 from app.services.host import require_host
 
 
@@ -123,6 +124,8 @@ def update_listing(
                 "listing_archived",
                 "Archived listings cannot be edited or restored.",
             )
+        if "max_pet_capacity" in data.model_fields_set:
+            ensure_capacity_floor(db, listing.id, listing.max_pet_capacity)
         species = (
             data.accepted_species
             if "accepted_species" in data.model_fields_set

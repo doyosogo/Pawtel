@@ -13,7 +13,13 @@ def get_engine() -> Engine:
     url = get_settings().database_url
     if url is None:
         raise RuntimeError("Set DATABASE_URL before using database operations.")
-    return create_engine(str(url), pool_pre_ping=True, hide_parameters=True)
+    # Acceptance must see the preceding lock holder's commit in its next statement.
+    return create_engine(
+        str(url),
+        pool_pre_ping=True,
+        hide_parameters=True,
+        isolation_level="READ COMMITTED",
+    )
 
 
 def dispose_engine() -> None:

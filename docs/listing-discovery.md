@@ -115,3 +115,10 @@ there is no temporary or production booking-creation endpoint.
 Deferred: booking requests/acceptance, authoritative concurrency, ranking, geocoding,
 images, public frontend, payments, messaging/reviews/notifications/admin. Existing
 production rate-limiting and operational-hardening limitations still apply.
+
+## Milestone 7 follow-up
+
+Pre-payment requests and Listing-locked acceptance are now implemented separately;
+see [Booking API](bookings.md). This does not change public advisory semantics.
+Only AWAITING_PAYMENT/CONFIRMED consume capacity. No automatic expiry or payment
+provider transition exists yet.

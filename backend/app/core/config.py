@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     backend_cors_origins: list[str] = []
     session_cookie_secure: bool = True
     session_lifetime_seconds: int = Field(default=86400, ge=300, le=604800)
+    booking_payment_window_seconds: int = Field(default=1800, ge=60, le=86400)
     verification_lifetime_seconds: int = Field(default=86400, ge=300, le=172800)
 
     @model_validator(mode="after")

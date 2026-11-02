@@ -6,6 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.errors import install_error_handlers
 from app.api.health import router as health_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.bookings import (
+    host_router as host_bookings_router,
+)
+from app.api.v1.bookings import (
+    router as bookings_router,
+)
 from app.api.v1.discovery import router as discovery_router
 from app.api.v1.host import router as host_router
 from app.api.v1.pets import router as pets_router
@@ -41,6 +47,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(pets_router)
     app.include_router(host_router)
     app.include_router(discovery_router)
+    app.include_router(bookings_router)
+    app.include_router(host_bookings_router)
     return app
 
 
