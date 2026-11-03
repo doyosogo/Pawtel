@@ -172,7 +172,7 @@ python -m pytest -m 'not integration'
 ```
 
 Format Python with `python -m ruff format .`. Python has no separate application
-build step; import/compile checks verify it. No frontend calls to domain APIs exist.
+build step; import/compile checks verify it.
 
 ## Frontend setup and verification
 
@@ -184,8 +184,38 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5173 for the temporary screen. It needs no frontend environment
-variables and does not fetch backend data yet.
+Open http://localhost:5173 for the marketplace. Start the backend on port 8000
+in another terminal first. Vite proxies `/api` to `http://127.0.0.1:8000`, preserving
+the browser origin for cookie sessions and CSRF checks. No frontend environment
+variables or credentials are needed. Use localhost:5173 (the configured allowed
+origin), rather than a LAN IP. Port 5173 is strict, so Vite will report a conflict
+instead of silently choosing another origin.
+
+Routes include the homepage, `/stays`, `/stays/:listingId`, `/register`, `/login`,
+and `/account`; `/hosting` explains the current hosting status without management
+tools. Search uses the real discovery filters and server pagination. Availability
+checks do not reserve a stay. Registration does not send email in this demo, and
+verified email remains required by the backend for hosting and bookings.
+
+React Router handles routes; TanStack Query handles server/session state. API
+requests include cookies. Writes fetch the current session CSRF nonce and include
+`X-PAWTEL-Request: 1`; passwords and session credentials are never persisted in
+browser storage. Local SVG illustrations are visibly labelled demo imagery.
+
+Optional fictional marketplace data, from the backend directory with its virtual
+environment active:
+
+```zsh
+python -m app.scripts.seed_demo
+```
+
+This create-only command requires APP_ENV=development and the local `pawtel_dev`
+database/role, rejects URL options and superuser execution, uses deterministic IDs
+and a transaction advisory lock, and preserves existing rows and edits. It creates
+12 fictional published Listings and passwordless hosts under reserved `.test`
+email addresses. Reruns create zero Listings when all demo rows already exist.
+There is no reset operation and seeded hosts cannot log in. Never use it to load
+production data.
 
 ```zsh
 npm run lint
@@ -194,7 +224,10 @@ npm run build
 npm run format:check
 ```
 
-`npm run preview` serves the build; `npm run format` formats source.
+`npm run build` includes `tsc -b` type checking. `npm run preview` serves the build;
+`npm run format` formats source. The `/api` proxy is a development-server feature;
+production hosting must route `/api` to the backend and serve the SPA fallback.
+Run npm commands from `frontend`, which contains package.json.
 
 ## Exercise authentication locally
 
