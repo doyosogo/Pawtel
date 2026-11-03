@@ -1,18 +1,19 @@
 # Booking state machine
 
-Milestone 7 implements request creation, Host accept/decline and Owner cancellation
-from REQUESTED/AWAITING_PAYMENT. Payment transitions and automatic completion below
-remain future design. PostgreSQL validates enum membership and row constraints, not
-old-to-new transitions. See [Booking API](bookings.md) for implemented contracts.
+Milestone 7 implements requests, Host accept/decline and Owner pre-payment cancellation.
+Milestone 8 adds sandbox webhook-confirmed payment and expiry/recovery. Payment failure,
+confirmed cancellation/refunds and automatic completion remain deferred. PostgreSQL
+validates enum membership and row constraints, not old-to-new transitions. See
+[Booking API](bookings.md) and [payments](payments.md) for actual contracts.
 
 | Current | Next | Responsible actor / condition | Capacity effect |
 |---|---|---|---|
 | REQUESTED | DECLINED | Listing host declines the request | None reserved |
 | REQUESTED | CANCELLED | Owner withdraws request | None reserved |
 | REQUESTED | AWAITING_PAYMENT | Host accepts after all transactional checks | Reserve all pets for each stay night |
-| AWAITING_PAYMENT | CONFIRMED | Future payment service validates successful payment before deadline | Retain reservation |
+| AWAITING_PAYMENT | CONFIRMED | Signed matching sandbox Checkout success; preserves held capacity | Retain reservation |
 | AWAITING_PAYMENT | PAYMENT_FAILED | Future payment service records definitive payment failure | Release reservation |
-| AWAITING_PAYMENT | EXPIRED | System observes payment deadline elapsed | Release reservation |
+| AWAITING_PAYMENT | EXPIRED | Signed unpaid Checkout expiry or explicit safe maintenance | Release reservation |
 | AWAITING_PAYMENT | CANCELLED | Owner cancels (implemented); Host cancellation deferred | Release reservation |
 | CONFIRMED | CANCELLED | Owner/host cancels under future policy | Release reservation; payment consequences handled separately |
 | CONFIRMED | COMPLETED | System verifies checkout has passed | Historical stay; no future capacity |
@@ -26,8 +27,7 @@ COMPLETED back to REQUESTED and late EXPIRED to CONFIRMED.
 
 The service must validate actor/ownership and current state, use a database
 transaction and reject stale/duplicate commands appropriately. A valid enum value
-alone is not permission to perform a transition. Payment confirmation will require
-verified, idempotent provider events in a later milestone; none exist now.
+alone is not permission to perform a transition. Milestone 8 confirms payment through verified, idempotent Stripe Checkout events.
 
 ## Reservation semantics
 
@@ -43,8 +43,8 @@ in the schema; BOOKING_PAYMENT_WINDOW_SECONDS now defaults to 1800 (30 minutes).
 elapsed timestamp alone does not update a row: release should be recorded as an
 explicit EXPIRED transition under the same reservation lock. Until then, treating
 the hold as reserved is conservative. Milestone 7 acceptance does not expire stale
-holds. Future expiry handling must use the same transaction protocol; no worker
-exists yet.
+holds. Milestone 8 adds signed Checkout expiry and explicit maintenance under the
+same protocol; no scheduled worker exists.
 
 Every failure/cancellation/expiry release and every capacity-affecting edit must
 follow the same concurrency protocol. A completed stay occupies no future nights.
@@ -113,5 +113,21 @@ AWAITING_PAYMENT → CANCELLED are implemented. Repeat CANCELLED cancellation is
 unchanged success; repeated accept/decline is a conflict. All actions lock Listing
 then Booking, including non-reserving declines/cancellations for a uniform order.
 Capacity configuration cannot be reduced below existing reserved peak occupancy.
-No automatic expiry, payment success/failure, confirmed cancellation or completion
-is implemented. See [ADR 0006](adr/0006-listing-locks-and-booking-quotes.md).
+Milestone 8 adds sandbox success/expiry below. Confirmed cancellation, refunds,
+automatic completion and a scheduler remain deferred. See [ADR 0006](adr/0006-listing-locks-and-booking-quotes.md).
+
+## Milestone 8 payment transitions
+
+Signed matching checkout.session.completed (paid, or zero-total no_payment_required)
+changes AWAITING_PAYMENT → CONFIRMED and preserves reserved capacity. Signed matching
+checkout.session.expired (unpaid) changes eligible AWAITING_PAYMENT → EXPIRED and
+releases capacity under Listing/Booking/attempt locking. Explicit maintenance can
+expire unstarted overdue holds or reconcile known unpaid Sessions. A provider read
+never confirms payment without a valid signed success webhook.
+
+Individual card failure is not terminal while Checkout remains open; PAYMENT_FAILED
+is unused by this card-only flow. Success after CANCELLED/EXPIRED cannot resurrect;
+PaymentAttempt records sticky reconciliation. Stale expiry cannot erase successful
+or paid-reconciliation state. First Checkout fixes a bounded 61-minute provider/hold
+window; retries never extend it. See [payments](payments.md) for exact policy and
+failure recovery. All provider calls remain outside inventory transactions.

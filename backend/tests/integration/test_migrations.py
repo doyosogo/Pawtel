@@ -18,6 +18,8 @@ TABLES = {
     "listing_accepted_species",
     "bookings",
     "booking_pets",
+    "payment_attempts",
+    "stripe_webhook_events",
 }
 ENUMS = {"pet_species", "australian_state", "listing_status", "booking_status"}
 
@@ -37,6 +39,13 @@ def test_migration_downgrade_upgrade_on_empty_test_database(db_engine):
     config.attributes["database_url"] = db_engine.url
     legacy_id = None
     try:
+        # Exercise the payment revision alone before the existing full round trip.
+        command.downgrade(config, "868589ec460a")
+        assert not {"payment_attempts", "stripe_webhook_events"} & set(
+            inspect(db_engine).get_table_names()
+        )
+        assert "bookings" in inspect(db_engine).get_table_names()
+        command.upgrade(config, "head")
         # New auth revision can be removed without changing the Milestone 2 schema.
         command.downgrade(config, "6667e668c806")
         assert "password_hash" not in {

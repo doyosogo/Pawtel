@@ -171,3 +171,12 @@ idempotency and real load/lock-contention measurements. Pet/account edits concur
 with acceptance are not a versioned profile-snapshot workflow; later Host-review policy
 may require stronger immutable profile/version semantics. Existing authentication
 rate-limit/deployment limitations still apply.
+
+## Milestone 8 follow-up
+
+Sandbox Checkout, signed success/expiry and explicit recovery are implemented in
+[payments](payments.md). The Booking locks/pricing contracts above remain intact.
+Cancellation now records provider cleanup intent atomically and expires Checkout
+outside locks. Checkout synchronizes the payment deadline once; late paid cancellation
+requires reconciliation. Stripe live mode, payouts, refunds and checkout UI remain
+outside scope. Statements above about payments being deferred describe Milestone 7.

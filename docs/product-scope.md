@@ -47,3 +47,9 @@ Owner/Host review, Host accept/decline and Owner pre-payment cancellation. Accep
 rechecks capacity under PostgreSQL Listing-row locking and ends at AWAITING_PAYMENT.
 Payments, expiry, confirmed cancellations/refunds, completion and booking UI remain
 deferred. Public availability remains advisory, not a reservation.
+
+Milestone 8 adds sandbox-only Checkout Sessions, durable payment attempts/webhook
+receipts, signed success confirmation, expiry/recovery and cancellation reconciliation.
+No live charges, Connect/Host payouts, transfers, saved cards, subscriptions, automatic
+refunds or checkout UI. Individual declined cards do not terminally fail open Checkout.
+Real sandbox credentials/verification are separate from deterministic offline tests.

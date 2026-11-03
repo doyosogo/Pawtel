@@ -2,8 +2,9 @@
 
 Milestone 2 introduced domain persistence; Milestone 3 adds authentication persistence
 and services. PostgreSQL 18 is the database; Python 3.14, typed SQLAlchemy 2 models and Alembic own the schema.
-Authentication endpoints now exist; booking, pricing and payment APIs do not. Every listing represents
-boarding. Other service types are intentionally absent.
+Authentication, private profiles/Listings, public discovery, transactional bookings
+and sandbox Checkout/webhook APIs now exist. Every Listing represents boarding;
+other service types are intentionally absent.
 
 ## Entity relationship diagram
 
@@ -19,6 +20,7 @@ erDiagram
     listings ||--o{ bookings : receives
     bookings ||--o{ booking_pets : includes
     pets ||--o{ booking_pets : participates
+    bookings ||--o{ payment_attempts : pays_through
 
     users {
         uuid id PK
@@ -105,12 +107,40 @@ erDiagram
         uuid booking_id PK,FK
         uuid pet_id PK,FK
     }
+    payment_attempts {
+        uuid id PK
+        uuid booking_id FK
+        varchar provider
+        varchar status
+        varchar checkout_session_id UK
+        varchar payment_intent_id UK
+        bigint amount_cents
+        bigint subtotal_cents
+        bigint service_fee_cents
+        varchar currency
+        timestamptz expires_at
+        text return_url
+        timestamptz completed_at
+        varchar reconciliation_reason
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    stripe_webhook_events {
+        varchar id PK
+        varchar event_type
+        varchar object_id
+        timestamptz received_at
+        timestamptz processed_at
+        varchar result
+    }
+
 ```
 
 The diagram shows physical cardinalities: a booking can physically have zero pets,
-and a listing zero accepted species. Later services must require at least one at
-request/publication time. Database nullability and Python types match. There are
-nine application tables, plus Alembic's version table.
+and a Listing zero accepted species. Services require at least one at request/
+publication time. There are eleven application tables plus Alembic's version table.
+Webhook receipts intentionally stand alone: unknown signed provider events need no
+fabricated local PaymentAttempt association. Database nullability matches model types.
 
 ## Account and profile decisions
 
@@ -453,3 +483,19 @@ pricing and aggregate capacity are transactional application rules. Listing capa
 edits now reject reductions below reserved peak occupancy. See [Booking service](bookings.md)
 and [ADR 0006](adr/0006-listing-locks-and-booking-quotes.md). Payments and automatic
 expiry/completion remain deferred; schema revision remains 868589ec460a.
+
+## Sandbox payment schema (Milestone 8)
+
+New revision b690ce0b281d follows unchanged 868589ec460a. PaymentAttempt has a RESTRICT
+Booking FK, unique nullable Session/PaymentIntent IDs, a booking lookup index and a
+partial unique booking_id index for CREATING/OPEN/REQUIRES_RECONCILIATION. It preserves
+amount components/currency/return URL/expiry for stable retries. CHECKs validate
+provider=stripe, currency=aud, statuses, nonnegative amounts, amount=subtotal+fee and
+expiry after creation. State strings use CHECKs rather than new native enum types.
+
+StripeWebhookEvent has a unique Event-ID primary key, safe type/object identity,
+processing timestamps/result, and an object lookup index for reconciliation. It
+stores neither raw body nor signature. No client/card secrets are persistence fields.
+See [payments](payments.md) for transaction, signature, ordering and recovery rules.
+Migration round trips operate only on the protected test database; no prior migration
+is rewritten. Refunds, Connect/payouts and production payment handling remain deferred.

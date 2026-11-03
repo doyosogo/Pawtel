@@ -5,12 +5,14 @@ of dogs/cats and accommodation hosts. One account will support optional Host mod
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 7 — transactional pre-payment bookings.** Implemented:
+**Status: Milestone 8 — sandbox Checkout and webhook-authoritative payments.** Implemented:
 registration/session authentication, private Pet Profiles, optional Host mode and
 verified-host Listing configuration, plus published-only public discovery/detail and
 date-aware capacity snapshots. Owners can request stays with server-priced quotes;
 Hosts accept/decline, and Owners cancel before payment. Acceptance reserves capacity
-transactionally. No payment integration, external email delivery or polished UI exists.
+transactionally. Owners can start Stripe sandbox Checkout; verified paid webhooks
+confirm bookings and expiry releases holds. No live charges, payouts, external email
+delivery or polished checkout UI exists.
 
 ## Stack and layout
 
@@ -232,14 +234,14 @@ No Pet management frontend exists yet.
 ## Deliberate limitations
 
 No email delivery, public resend endpoint, password reset, OAuth, MFA, polished auth
-UI or payment workflows are implemented. Before public deployment,
+UI or live payment/payout workflows are implemented. Before public deployment,
 add rate limiting/credential-stuffing controls, email recovery/delivery, deployment
 hardening and session cleanup/retention. Current security tests reduce risk but do
 not establish timing immunity or complete production security.
 
 Domain constraints alone do not enforce per-night capacity, booking transitions,
 pet ownership or pricing formulas. Milestone 7 services enforce these for pre-payment
-requests/actions; future payment transitions must follow the same protocol. Ranked/geospatial search, messaging, reviews, maps, notifications,
+requests/actions; sandbox payment/expiry transitions now follow the same protocol. Ranked/geospatial search, messaging, reviews, maps, notifications,
 images and admin functionality also remain deferred. There is no measured index
 performance claim or production runtime/migration-role separation yet.
 
@@ -291,3 +293,22 @@ explicit future expiry transition. No Stripe/payment-success/expiry scheduler ex
 All writes use existing CSRF/request protections. Creation is not idempotent: do not
 blindly retry unknown outcomes. See [Booking contracts](docs/bookings.md) and
 [ADR 0006](docs/adr/0006-listing-locks-and-booking-quotes.md). No migration was needed.
+
+## Stripe sandbox payments (Milestone 8)
+
+Apply migration b690ce0b281d and configure safe test-only Stripe settings in ignored
+.env; never commit keys/signing/client secrets. Verified Owners POST
+`/api/v1/bookings/{id}/checkout-session` with `{}` and normal CSRF protections.
+Checkout uses accepted price snapshots, elements/payment/AUD/card-only and fixed
+attempt idempotency keys. Only signed raw-byte Stripe webhooks confirm payment;
+a frontend redirect cannot. Paid cancellation races require reconciliation, not
+resurrection or automatic refunds. No Host payouts/Connect or polished checkout exists.
+
+See [payment contracts/recovery/CLI workflow](docs/payments.md),
+[ADR 0007](docs/adr/0007-checkout-and-webhook-authority.md) and
+[payment interview notes](docs/payments-interview.md). Explicit maintenance can be
+run from backend with `python -m app.payments.maintenance --limit 100`; it expires
+unstarted overdue holds or reconciles provider sessions without bypassing webhook
+confirmation. No automatic scheduler is installed. Normal tests use offline provider
+fakes and require PostgreSQL, not Stripe internet. Real sandbox smoke verification
+is a separate check and requires safely provisioned test credentials.

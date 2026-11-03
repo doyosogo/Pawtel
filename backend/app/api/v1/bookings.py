@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, Query
 from app.core.config import Settings
 from app.models import User
 from app.models.enums import BookingStatus
+from app.payments import service as payment_service
+from app.payments.gateway import StripeGateway
 from app.schemas.bookings import BookingOutput, BookingRequest, EmptyAction
 from app.security.dependencies import (
     Database,
@@ -74,9 +76,12 @@ def cancel(
     user: UserDep,
     config: SettingsDep,
 ):
-    return bookings.act(
+    result = bookings.act(
         db, user.id, booking_id, "cancel", config.booking_payment_window_seconds
     )
+    if config.stripe_secret_key and config.stripe_return_url:
+        payment_service.cleanup_cancelled(db, booking_id, StripeGateway(config))
+    return result
 
 
 @host_router.post("/{booking_id}/accept", response_model=BookingOutput)

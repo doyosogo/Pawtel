@@ -117,3 +117,15 @@ now reject reductions below reserved occupancy under their parent write lock.
 Separate-connection PostgreSQL tests observe actual blocking and prove one final-space
 winner. No new migration, infrastructure or payment integration was introduced.
 See [Booking design](bookings.md) and ADR 0006 for boundaries and limitations.
+
+## Stripe boundary (Milestone 8)
+
+Official SDK Checkout Sessions use elements/payment/AUD/card-only in sandbox mode.
+A local PaymentAttempt is committed before provider calls, then refreshed/recorded in
+a second Listing-first transaction. Deterministic request keys recover unknown outcomes;
+Event-ID receipts make signed raw-body webhooks durable/idempotent. Matching success
+is the confirmation authority, not browser returns. Cancellation cleanup runs after
+local commit; late money remains reconciliation, never unreserved confirmation.
+Synchronous webhooks do short SQL work without a queue. Explicit maintenance is not
+a scheduler. See [payment architecture](payments.md) and ADR 0007; payouts/refunds,
+Connect, live mode and checkout UI are not implemented.

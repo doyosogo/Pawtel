@@ -9,7 +9,15 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.errors import APIError
-from app.models import Booking, BookingPet, Listing, ListingAcceptedSpecies, Pet, User
+from app.models import (
+    Booking,
+    BookingPet,
+    Listing,
+    ListingAcceptedSpecies,
+    PaymentAttempt,
+    Pet,
+    User,
+)
 from app.models.enums import BookingStatus, ListingStatus
 from app.schemas.bookings import (
     BookingListing,
@@ -312,6 +320,17 @@ def act(db: Session, user_id: UUID, booking_id: UUID, action: str, window_second
                 )
                 validate_pets(db, row.owner_id, pet_ids, listing)
                 ensure_capacity(db, listing, row.start_date, row.end_date, len(pet_ids))
+            if action == "cancel":
+                for attempt in db.scalars(
+                    select(PaymentAttempt)
+                    .where(
+                        PaymentAttempt.booking_id == row.id,
+                        PaymentAttempt.status.in_(["CREATING", "OPEN"]),
+                    )
+                    .with_for_update()
+                ):
+                    attempt.status = "REQUIRES_RECONCILIATION"
+                    attempt.reconciliation_reason = "CANCEL_CLEANUP_PENDING"
             transition(row, action, window_seconds)
             db.flush()
             return read_output(db, scoped(user_id, host).where(Booking.id == row.id))

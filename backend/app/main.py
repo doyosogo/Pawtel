@@ -14,6 +14,7 @@ from app.api.v1.bookings import (
 )
 from app.api.v1.discovery import router as discovery_router
 from app.api.v1.host import router as host_router
+from app.api.v1.payments import router as payments_router
 from app.api.v1.pets import router as pets_router
 from app.core.config import Settings, get_settings
 from app.db.session import dispose_engine
@@ -49,6 +50,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(discovery_router)
     app.include_router(bookings_router)
     app.include_router(host_bookings_router)
+    app.include_router(payments_router)
     return app
 
 

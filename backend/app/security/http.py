@@ -15,11 +15,19 @@ class AuthHTTPMiddleware(BaseHTTPMiddleware):
         self.settings = settings
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path.startswith("/api/v1/") and request.method not in {
-            "GET",
-            "HEAD",
-            "OPTIONS",
-        }:
+        if (
+            request.url.path.startswith("/api/v1/")
+            and not (
+                request.method == "POST"
+                and request.url.path == "/api/v1/webhooks/stripe"
+            )
+            and request.method
+            not in {
+                "GET",
+                "HEAD",
+                "OPTIONS",
+            }
+        ):
             origin = request.headers.get("origin")
             if origin is not None and origin not in self.settings.backend_cors_origins:
                 return self.no_store(
