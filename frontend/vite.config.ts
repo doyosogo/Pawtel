@@ -2,6 +2,9 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
+  // Read only VITE_-prefixed public values from the existing root .env.
+  // Server-only database/Stripe secrets are never exposed through import.meta.env.
+  envDir: '..',
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,

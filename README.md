@@ -5,14 +5,14 @@ of dogs/cats and accommodation hosts. One account will support optional Host mod
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 8 — sandbox Checkout and webhook-authoritative payments.** Implemented:
+**Status: Milestone 11 — marketplace, Booking workflows and sandbox Checkout Elements.** Implemented:
 registration/session authentication, private Pet Profiles, optional Host mode and
 verified-host Listing configuration, plus published-only public discovery/detail and
 date-aware capacity snapshots. Owners can request stays with server-priced quotes;
 Hosts accept/decline, and Owners cancel before payment. Acceptance reserves capacity
 transactionally. Owners can start Stripe sandbox Checkout; verified paid webhooks
 confirm bookings and expiry releases holds. No live charges, payouts, external email
-delivery or polished checkout UI exists.
+delivery exists. The Owner sandbox Checkout Elements UI is documented below.
 
 ## Stack and layout
 
@@ -437,8 +437,8 @@ registration and verification requirements have no bypass or new endpoint.
    request if you also want to exercise decline; no decline reason is persisted.
 7. Log out and return as Owner. Open My Bookings/detail and Refresh booking if
    needed. Confirm Payment required, total, deadline and temporarily reserved
-   capacity. Secure payment will be connected in Milestone 11; there is no checkout
-   button or fake charge in this milestone.
+   capacity. Use Pay securely for the Milestone 11 sandbox checkout, after configuring
+   Stripe as described below.
 8. Exercise cancellation on a separate requested/awaiting-payment Booking, empty
    inbox/filter states, keyboard navigation and mobile/tablet widths. Confirm no
    horizontal overflow and that price rows and actions remain readable.
@@ -446,5 +446,45 @@ registration and verification requirements have no bypass or new endpoint.
 Email delivery remains unconfigured. Normal newly registered users can manage
 Pets, but require verified email for Bookings/hosting. Only the explicitly synthetic
 local seed identities are marked verified by tooling. Never expose verification
-tokens through the UI. Stripe frontend integration is Milestone 11. Reviews,
+tokens through the UI. Stripe frontend integration is documented below. Reviews,
 messaging, image uploads and full Host Listing CRUD remain out of scope.
+
+## Stripe Checkout Elements website (Milestone 11)
+
+Owner AWAITING_PAYMENT detail now has **Pay securely**, leading to
+`/account/bookings/:bookingId/pay`. The page reads the real Owner Booking, displays
+its saved AUD prices/dates/Pets and loads Stripe's secure Elements form. It sends
+no client price/status values. Card details stay in Stripe-controlled Elements.
+Host pages have no checkout controls.
+
+Set the sandbox's `VITE_STRIPE_PUBLISHABLE_KEY` privately in ignored root `.env`;
+Vite reads root configuration but exposes only default VITE_-prefixed variables.
+Keep backend STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET server-only. All keys
+must belong to the same sandbox; this project intentionally refuses live keys.
+Restart both servers after configuration changes. Empty `.env.example` placeholders
+contain no working credentials.
+
+For your manual local test, configure the Stripe CLI yourself and forward:
+
+```zsh
+stripe listen --events checkout.session.completed,checkout.session.expired --forward-to http://localhost:8000/api/v1/webhooks/stripe
+```
+
+Put that listener's signing secret privately in `.env` and restart the backend.
+Keep STRIPE_RETURN_URL as `http://localhost:5173/checkout/return`; Stripe confirmation
+uses a same-origin Booking-specific return path. Follow the Owner request/Host
+acceptance demo above, return as Owner, choose Pay securely, load the form and use
+only [Stripe's documented test scenarios](https://docs.stripe.com/testing).
+
+The return page starts with **Checking payment status** and reads PAWTEL. It shows
+success only when the backend returns CONFIRMED after a verified webhook. Pending
+status checks stop after a bounded interval; manual refresh remains available.
+Test a decline/retry, cancellation, logout, stale checkout URLs and mobile widths
+manually. No real sandbox payment was performed by automation.
+
+Checkout client secrets stay in component memory, outside Query/Mutation caches,
+URLs, logs and browser storage. Reloads use the protected backend endpoint again.
+The only backend compatibility change replaces the removed Endive creation input
+`payment_method_types` with `allowed_payment_method_types`, preserving card-only
+Elements Checkout. No Booking/webhook/security rules were changed. See
+[the complete payment walkthrough and lifecycle notes](docs/payments.md#owner-checkout-elements-website-milestone-11).

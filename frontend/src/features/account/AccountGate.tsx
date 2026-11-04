@@ -24,7 +24,7 @@ export function AccountGate({ verified = false }: { verified?: boolean }) {
   if (session.data.state === 'anonymous')
     return (
       <Navigate
-        to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`}
+        to={`/login?next=${encodeURIComponent(location.pathname + (/\/payment-return$|^\/checkout\/return$/.test(location.pathname) ? '' : location.search))}`}
         replace
       />
     );

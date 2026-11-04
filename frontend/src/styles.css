@@ -1784,3 +1784,19 @@ main {
     font-size: 0.9rem;
   }
 }
+
+.checkout-grid {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.checkout-grid > * {
+  min-width: 0;
+}
+.payment-summary li {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 800px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+}

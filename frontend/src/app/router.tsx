@@ -11,6 +11,8 @@ import { PetsPage } from '../features/pets/PetsPage';
 import { BookingsPage } from '../features/bookings/BookingsPage';
 import { BookingDetailPage } from '../features/bookings/BookingDetailPage';
 import { HostGate, HostPage } from '../features/host/HostPage';
+import { CheckoutPage } from '../features/payments/CheckoutPage';
+import { PaymentReturnPage } from '../features/payments/PaymentReturnPage';
 export const router = createBrowserRouter([
   {
     element: <Layout />,
@@ -30,6 +32,15 @@ export const router = createBrowserRouter([
         element: <AccountGate verified />,
         children: [
           { path: '/account/bookings', element: <BookingsPage /> },
+          {
+            path: '/account/bookings/:bookingId/pay',
+            element: <CheckoutPage />,
+          },
+          {
+            path: '/account/bookings/:bookingId/payment-return',
+            element: <PaymentReturnPage />,
+          },
+          { path: '/checkout/return', element: <PaymentReturnPage /> },
           {
             path: '/account/bookings/:bookingId',
             element: <BookingDetailPage />,

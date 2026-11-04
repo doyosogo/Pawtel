@@ -169,10 +169,13 @@ export function BookingDetailPage({ host = false }: { host?: boolean }) {
             Capacity is temporarily reserved while awaiting payment. The payment
             window can expire.
           </p>
-          <p>Secure payment will be connected in the next step.</p>
+          {!host && (
+            <Link className="button" to={`/account/bookings/${booking.id}/pay`}>
+              Pay securely
+            </Link>
+          )}
           <p className="field-help">
-            Refresh this booking to check its latest status. Payment processing
-            is not available on this website yet.
+            Refresh this Booking to check its latest payment status.
           </p>
         </section>
       )}

@@ -16,6 +16,8 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^7.0.1",
+    "@stripe/stripe-js": "^10.2.1",
     "@tanstack/react-query": "^5.104.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

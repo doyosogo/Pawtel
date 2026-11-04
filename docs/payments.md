@@ -3,7 +3,7 @@
 PAWTEL uses the official Stripe Python SDK and Checkout Sessions, API version
 2026-10-28.endive, ui_mode=elements, mode=payment, currency AUD, card-only. Checkout
 manages card collection/authentication without PAWTEL implementing raw PaymentIntent
-orchestration. The future React Checkout Elements component is not built. No PAN,
+orchestration. Milestone 11 adds the React Checkout Elements website below. No PAN,
 card details or saved-card credentials pass through PAWTEL. No live keys, Connect,
 Host payouts, transfers, subscriptions or automatic refunds are supported.
 
@@ -14,8 +14,7 @@ STRIPE_WEBHOOK_SECRET and STRIPE_RETURN_URL. Empty example values intentionally 
 not fabricate credentials. Only test-key prefixes are accepted, even in production
 configuration. Secrets use Pydantic SecretStr. SDK payload logging is disabled;
 application errors never echo provider exceptions. HTTPS is required for production
-return URLs; URLs cannot contain userinfo, query or fragment. The return page is not
-yet implemented and is never proof of payment.
+return URLs; URLs cannot contain userinfo, query or fragment. The return page reads backend Booking state and is never proof of payment.
 
 Install the official CLI if needed:
 
@@ -62,8 +61,8 @@ Only booking_id/payment_attempt_id go into provider metadata; no email/Pet infor
 
 Response includes payment_attempt_id, sensitive client_secret and expires_at. The
 secret is returned only to that Owner, not saved, logged or put in a URL. Responses
-remain no-store. Hosts receive no Stripe credentials through Booking DTOs. Future
-frontend code must not log secrets or persist them in browser storage.
+remain no-store. Hosts receive no Stripe credentials through Booking DTOs. Frontend code keeps
+client secrets only in component memory, outside caches and browser storage.
 
 ## Persistence and idempotency
 
@@ -216,10 +215,133 @@ idempotent Session identity; it must never be fabricated if credentials are unav
 Synchronous webhook processing is short SQL work; no external calls under locks and
 no queue/microservice. Introduce workers only if measured workload warrants them.
 No live deployment readiness, refund automation, payouts/Connect, saved cards,
-subscriptions, checkout UI, chargeback handling or guaranteed automated recovery is
+subscriptions, chargeback handling or guaranteed automated recovery is
 claimed. Existing rate limiting, email delivery and deployment-hardening limits remain.
 
 Official references: [Checkout create](https://docs.stripe.com/api/checkout/sessions/create),
 [webhooks](https://docs.stripe.com/webhooks),
 [idempotent requests](https://docs.stripe.com/api/idempotent_requests),
 [temporary sandbox CLI](https://docs.stripe.com/cli/sandbox).
+
+## Owner Checkout Elements website (Milestone 11)
+
+The Owner Booking detail now links to `/account/bookings/:bookingId/pay` only for
+AWAITING_PAYMENT. This route reads the Owner-only Booking API before showing any
+checkout control, then rechecks status/deadline before Session creation and before
+confirmation. These are UX checks; the backend still authorizes the request and
+owns every transition. There are no Host payment controls or credentials.
+
+The only added direct frontend dependencies are `@stripe/stripe-js` (10.2.1) and
+`@stripe/react-stripe-js` (7.0.1). The `/checkout` React entry point provides
+CheckoutElementsProvider, useCheckoutElements, ContactDetailsElement and
+PaymentElement. Stripe.js loads from Stripe through the official pure loader only
+when payment is opened. Stripe's controlled Elements collect contact/card data;
+there are no PAWTEL card inputs. Supported Appearance API variables use PAWTEL's
+palette and rounded corners. Stripe's current Checkout total is displayed and
+checked against the saved AUD Booking total before confirmation.
+
+One compatibility correction was required for the existing 2026-10-28.endive API
+pin: Checkout creation now uses `allowed_payment_method_types: ["card"]` instead
+of the removed `payment_method_types` input. `ui_mode="elements"`, the API pin,
+pricing, locks, idempotency and webhook/security rules are unchanged. See
+[Stripe's Endive migration note](https://docs.stripe.com/changelog/endive/2026-09-30/remove-payment-method-types-checkout-sessions).
+
+### Public key and local sandbox setup
+
+Put all real configuration privately in ignored root `.env`. Vite reads this
+location through envDir but exposes only its default `VITE_` prefix. Configure
+`VITE_STRIPE_PUBLISHABLE_KEY` with the sandbox's publishable test key, matching
+the backend's sandbox account. This is the only Stripe key used by browser code.
+Never prefix STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET or database values with
+VITE_. Restart Vite after environment changes; production bundles bake in the
+public value at build time. The frontend deliberately rejects live-key prefixes,
+matching the backend's sandbox-only policy. Empty placeholders remain in
+`.env.example`; no credentials were supplied or generated for this milestone.
+
+1. Privately configure backend STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET and
+   STRIPE_RETURN_URL, plus VITE_STRIPE_PUBLISHABLE_KEY. Keep
+   `STRIPE_RETURN_URL=http://localhost:5173/checkout/return` as the generic fallback.
+   The client supplies a same-origin, Booking-specific returnUrl to Stripe confirm;
+   the fixed backend URL is not an authority signal and contains no secrets.
+2. Authenticate/configure the Stripe CLI yourself for that sandbox if necessary.
+   No interactive login or CLI listener is started by this implementation.
+3. Start webhook forwarding in your own terminal:
+   ```zsh
+   stripe listen --events checkout.session.completed,checkout.session.expired --forward-to http://localhost:8000/api/v1/webhooks/stripe
+   ```
+   Copy the listener signing secret privately to ignored `.env`, never into chat,
+   source or reports. Restart the backend after changing it. For a deployed
+   endpoint, configure snapshot events with the matching pinned API version.
+4. Start PAWTEL in two terminals:
+   ```zsh
+   cd ~/Desktop/PAWTEL/backend
+   source .venv/bin/activate
+   uvicorn app.main:app --reload
+   ```
+   ```zsh
+   cd ~/Desktop/PAWTEL/frontend
+   npm run dev
+   ```
+5. Follow the README workflow seed instructions with your private demo password.
+   Log in as workflow.owner@pawtel.example.com, select active Pets and request
+   **Demo workflow garden stay**. Log out and log in as
+   workflow.host@pawtel.example.com; accept through the Host inbox.
+6. Return as Owner, open the AWAITING_PAYMENT Booking and choose **Pay securely**,
+   then **Load secure payment form**. Check dates, Pets, saved subtotal/fee/total,
+   Stripe total and the payment deadline. The existing backend may update the
+   deadline when it creates the first provider Session; the page re-reads it.
+7. Enter only Stripe's documented sandbox test details in the Stripe form. Use
+   [Stripe testing scenarios](https://docs.stripe.com/testing) for success,
+   declined-card and authentication cases. Do not use real card information and
+   do not paste card details into PAWTEL code/tests.
+8. Confirm payment. A successful browser result navigates to
+   `/account/bookings/:bookingId/payment-return`; redirect-based authentication
+   uses the same same-origin path. The return page reads PAWTEL. Only a verified
+   completed webhook can make the backend return CONFIRMED.
+9. Observe **Your stay is confirmed** after the webhook commits. If pending,
+   check forwarding/signing-key/account configuration privately, then refresh.
+   Do not create a fake confirmation or treat a standalone CLI-generated event
+   as proof: it must match the persisted provider attempt.
+10. Also test a decline then retry, logout during checkout, cancellation from
+    Booking detail and revisiting an old checkout URL. Resize desktop/tablet/mobile
+    and test keyboard access. The form should disappear on logout or observed
+    cancellation. A foreign Booking must remain inaccessible.
+
+### Secret lifetime, retries and asynchronous state
+
+Starting checkout sends only `{}` to the existing CSRF-protected endpoint. Its
+client secret lives only in the mounted checkout component and Stripe provider;
+it is never a Query/Mutation result, storage value, URL parameter or application
+log. Unmounting on logout, user/Booking navigation or observed non-payable state
+removes the local payment subtree. Late responses after unmount are ignored.
+A page reload starts through the protected endpoint again, allowing the existing
+backend attempt/session idempotency to resolve reuse safely.
+
+`checkout.confirm({redirect: "if_required", returnUrl: ...})` never updates a
+PAWTEL Booking locally. Declines keep the form available for retry while usable.
+Initialization/network failures have safe copy and refresh/reload controls; raw
+provider exceptions are not printed. Backend window/ineligibility/reconciliation
+rejections block further starts on that page. The deadline timer hides the form
+without inventing an EXPIRED Booking state; only the backend supplies that state.
+A fresh status/deadline read occurs before confirming, but cancellation can still
+race a provider operation. Existing backend reconciliation handles that race.
+
+The return page ignores success/session query-string claims and removes unsolicited
+return parameters from browser location. It initially shows Checking payment
+status, then renders the actual backend state. While AWAITING_PAYMENT it checks at
+three-second intervals, bounded to fewer than 30 seconds and at most ten successful
+reads. It stops on errors or any other state; manual refresh remains available.
+CONFIRMED shows success; EXPIRED, CANCELLED and other states retain their actual
+meaning. A generic `/checkout/return` without a Booking ID links to My Bookings
+rather than guessing from provider query parameters. No global payment polling.
+
+If a paid event arrives after cancellation, the backend keeps CANCELLED and marks
+the attempt for reconciliation. The UI never resurrects the Booking or offers an
+automatic refund. Host payouts/Connect and refunds remain outside this milestone.
+
+Automated coverage mocks Stripe at the React boundary and uses the existing backend
+fake gateway. No real sandbox success is claimed without manual/provider evidence.
+Official implementation references:
+[Checkout Elements provider](https://docs.stripe.com/js/react_stripe_js/checkout/checkout_provider),
+[Checkout hook](https://docs.stripe.com/js/react_stripe_js/checkout/use_checkout_elements),
+[confirmation](https://docs.stripe.com/js/custom_checkout/confirm).

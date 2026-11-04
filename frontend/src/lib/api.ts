@@ -83,6 +83,20 @@ export function errorMessage(error: unknown): string {
   if (!(error instanceof ApiError))
     return 'Something went wrong. Please try again.';
   const messages: Record<string, string> = {
+    payments_not_configured:
+      'Sandbox payments are not configured. Return to your Booking and try later.',
+    booking_not_payable:
+      'This Booking is no longer awaiting payment. Refresh its status.',
+    payment_window_closed:
+      'The payment window has closed or has too little time remaining. Check your Booking status.',
+    payment_reconciliation_required:
+      'Your payment is being checked. Do not submit another payment; refresh your Booking status later.',
+    checkout_not_open:
+      'This checkout is no longer open. Check your Booking status before trying again.',
+    checkout_rejected:
+      'The secure checkout could not be opened. Check your Booking before trying again.',
+    checkout_temporarily_unavailable:
+      'Checkout is temporarily unavailable. Check your Booking status; you can retry opening checkout for this Booking.',
     booking_capacity_unavailable:
       'Those dates are no longer available for this request. Try different dates or fewer pets.',
     booking_busy:

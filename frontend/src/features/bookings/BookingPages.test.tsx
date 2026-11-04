@@ -125,7 +125,7 @@ it('presents payment deadline and reservation without Stripe calls', async () =>
     screen.getByText(/Capacity is temporarily reserved/),
   ).toBeInTheDocument();
   expect(
-    screen.getByText('Secure payment will be connected in the next step.'),
+    screen.getByRole('link', { name: 'Pay securely' }),
   ).toBeInTheDocument();
   expect(screen.getByText('Payment deadline:')).toBeInTheDocument();
   expect(

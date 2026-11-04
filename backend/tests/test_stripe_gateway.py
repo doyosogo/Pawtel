@@ -77,6 +77,9 @@ def test_sdk_stable_idempotency_and_exact_create_parameters(monkeypatch):
     assert a == b and calls[0] == calls[1]
     assert calls[0][1] == {"idempotency_key": f"pawtel-checkout-{attempt.id}"}
     assert "synthetic-secret" not in repr(a)
+    assert calls[0][0]["ui_mode"] == "elements"
+    assert calls[0][0]["allowed_payment_method_types"] == ["card"]
+    assert "payment_method_types" not in calls[0][0]
 
 
 @pytest.mark.parametrize(

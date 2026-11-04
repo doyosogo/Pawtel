@@ -69,7 +69,7 @@ def create_params(attempt):
     return {
         "ui_mode": "elements",
         "mode": "payment",
-        "payment_method_types": ["card"],
+        "allowed_payment_method_types": ["card"],
         "return_url": attempt.return_url,
         "expires_at": int(attempt.expires_at.timestamp()),
         "metadata": {

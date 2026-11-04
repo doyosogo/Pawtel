@@ -249,7 +249,7 @@ def test_start_uses_snapshot_reuses_secret_not_persisted(pay, caplog):
     assert (
         params["ui_mode"] == "elements"
         and params["mode"] == "payment"
-        and params["payment_method_types"] == ["card"]
+        and params["allowed_payment_method_types"] == ["card"]
     )
     assert sum(x["price_data"]["unit_amount"] for x in params["line_items"]) == 11000
     assert all(x["price_data"]["currency"] == "aud" for x in params["line_items"])
