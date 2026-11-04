@@ -345,3 +345,106 @@ unstarted overdue holds or reconciles provider sessions without bypassing webhoo
 confirmation. No automatic scheduler is installed. Normal tests use offline provider
 fakes and require PostgreSQL, not Stripe internet. Real sandbox smoke verification
 is a separate check and requires safely provisioned test credentials.
+
+## Booking website and local workflow demo (Milestone 10)
+
+The public marketplace keeps its existing search, Listing details and advisory
+availability checks. The account menu now links to My Pets, My Bookings and the
+Host workspace. Private routes redirect to login with a return path; the API still
+enforces ownership, active accounts, verified email, CSRF and Booking transitions.
+
+- `/account/pets`: active/archived Pet collection, create/edit and confirmed archive.
+  Only name, DOG/CAT species, optional breed and optional birth date are editable.
+- `/account/bookings` and `/:bookingId`: Owner history, saved server prices,
+  status/deadline, manual refresh and cancellation of REQUESTED/AWAITING_PAYMENT.
+- `/host`, `/host/bookings` and `/:bookingId`: existing Listing summaries, inbox,
+  safe Owner/Pet information and explicit accept/decline actions. Non-host accounts
+  receive an explanation. Host setup and full Listing editors remain later work.
+
+Request a Booking from Listing detail using the dates above the Pet selector.
+Public availability uses its entered pet count; the real Booking uses the selected
+Pet IDs, whose count may differ. Ineligible species are disabled. The server
+revalidates active Pet ownership/species, dates, Listing state and capacity.
+Only `listing_id`, `pet_ids`, `check_in`, `check_out` are submitted; the response
+provides the authoritative subtotal, 10% fee and total. The website makes no price
+estimate or payment request. Unknown submission outcomes must be checked in My
+Bookings before retrying: the create endpoint has no idempotency-key contract.
+
+TanStack Query holds server state under user-scoped private keys. Pet mutations
+invalidate Pet collections (and archive refreshes Booking summaries). Booking
+mutations invalidate Owner/Host collections/details and public availability/search.
+Private caches are removed on logout or a detected expired session. There is no
+background polling: use Refresh booking/inbox to observe another user's action.
+
+### Optional login-enabled synthetic identities
+
+The original `python -m app.scripts.seed_demo` remains a create-only marketplace
+seed with 12 passwordless hosts. A separate opt-in command creates two additional
+synthetic verified accounts, two Pets and one additional published Listing:
+
+- Owner: `workflow.owner@pawtel.example.com` (Demo Milo, DOG; Demo Luna, CAT).
+- Host: `workflow.host@pawtel.example.com`.
+- Listing: **Demo workflow garden stay**, Norwood, SA; accepts dogs and cats.
+
+These addresses use reserved example.com and pass the actual auth email validator.
+No messages are delivered. For the password, choose your own local 15–128 character
+passphrase. Set `PAWTEL_DEMO_PASSWORD` in the existing ignored root `.env` locally;
+do not paste a password into tracked files, documentation, terminal history or a
+chat. Alternatively, enter it without echo for just this command:
+
+```zsh
+cd ~/Desktop/PAWTEL/backend
+source .venv/bin/activate
+read -s 'PAWTEL_DEMO_PASSWORD?Local demo passphrase: '
+export PAWTEL_DEMO_PASSWORD
+python -m app.scripts.seed_workflow
+unset PAWTEL_DEMO_PASSWORD
+```
+
+The command also reads the ignored `.env`. It refuses missing/invalid passwords,
+non-development settings, remote/unsafe targets, wrong database/role identity and
+superuser execution. It hashes through the normal Argon2id function, does not print
+the password, creates no Bookings, and changes only the fixed synthetic login
+identities. Rerunning is idempotent. Changing the configured password rotates
+synthetic hashes and revokes their existing sessions. Existing Listing/Pet edits,
+including archive state, are preserved; it is not a reset command. If you archive
+the seeded Pets, create new Pets via the UI for subsequent demos. Normal
+registration and verification requirements have no bypass or new endpoint.
+
+### Manual walkthrough
+
+1. Configure the local password and run the workflow seed as above. Optionally run
+   the original marketplace seed as well if it has not already been run.
+2. Start the backend:
+   ```zsh
+   cd ~/Desktop/PAWTEL/backend
+   source .venv/bin/activate
+   uvicorn app.main:app --reload
+   ```
+3. Start the frontend in another terminal:
+   ```zsh
+   cd ~/Desktop/PAWTEL/frontend
+   npm run dev
+   ```
+4. Open http://localhost:5173 yourself. Log in as the synthetic Owner using your
+   locally chosen password. Inspect My Pets; create/edit a spare Pet and archive
+   it with confirmation; show archived Pets.
+5. Search Norwood, open **Demo workflow garden stay**, choose future dates,
+   optionally check availability, select Demo Milo and Demo Luna, and Request
+   booking. Inspect Waiting for host and the server price snapshot in My Bookings.
+6. Log out. Log in as the synthetic Host with the same locally configured password.
+   Open Host workspace → Booking inbox → the request. Accept it. Create a second
+   request if you also want to exercise decline; no decline reason is persisted.
+7. Log out and return as Owner. Open My Bookings/detail and Refresh booking if
+   needed. Confirm Payment required, total, deadline and temporarily reserved
+   capacity. Secure payment will be connected in Milestone 11; there is no checkout
+   button or fake charge in this milestone.
+8. Exercise cancellation on a separate requested/awaiting-payment Booking, empty
+   inbox/filter states, keyboard navigation and mobile/tablet widths. Confirm no
+   horizontal overflow and that price rows and actions remain readable.
+
+Email delivery remains unconfigured. Normal newly registered users can manage
+Pets, but require verified email for Bookings/hosting. Only the explicitly synthetic
+local seed identities are marked verified by tooling. Never expose verification
+tokens through the UI. Stripe frontend integration is Milestone 11. Reviews,
+messaging, image uploads and full Host Listing CRUD remain out of scope.

@@ -107,9 +107,23 @@ export function Header() {
                         : 'Account inactive'}
                     </p>
                     {user && (
-                      <Link to="/account" onClick={() => setOpen(false)}>
-                        Your account
-                      </Link>
+                      <>
+                        <Link to="/account" onClick={() => setOpen(false)}>
+                          Your account
+                        </Link>
+                        <Link to="/account/pets" onClick={() => setOpen(false)}>
+                          My Pets
+                        </Link>
+                        <Link
+                          to="/account/bookings"
+                          onClick={() => setOpen(false)}
+                        >
+                          My Bookings
+                        </Link>
+                        <Link to="/host" onClick={() => setOpen(false)}>
+                          Host workspace
+                        </Link>
+                      </>
                     )}
                     <Link to="/hosting" onClick={() => setOpen(false)}>
                       {hostingLabel}

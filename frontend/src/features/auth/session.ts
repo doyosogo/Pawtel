@@ -40,7 +40,11 @@ export async function clearPrivateData(client: QueryClient) {
   await client.cancelQueries({
     predicate: (query) => query.meta?.private === true,
   });
-  client.removeQueries({ predicate: (query) => query.meta?.private === true });
+  // Keep the observed session query so setting anonymous/current-user notifies every subscriber.
+  client.removeQueries({
+    predicate: (query) =>
+      query.meta?.private === true && query.queryKey[0] !== sessionKey[0],
+  });
 }
 export interface HostProfile {
   user_id: string;

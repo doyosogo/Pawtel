@@ -83,6 +83,26 @@ export function errorMessage(error: unknown): string {
   if (!(error instanceof ApiError))
     return 'Something went wrong. Please try again.';
   const messages: Record<string, string> = {
+    booking_capacity_unavailable:
+      'Those dates are no longer available for this request. Try different dates or fewer pets.',
+    booking_busy:
+      'This booking is being updated. Refresh it before trying again.',
+    booking_invalid_state:
+      'This booking has changed. Refresh to see its current status.',
+    listing_unavailable:
+      'This Listing is no longer available for a request or acceptance.',
+    pet_not_available:
+      'One or more pets are no longer eligible. Refresh your pets and choose active pets you own.',
+    pet_not_accepted:
+      'This Listing does not accept the species of one or more selected pets.',
+    invalid_booking_dates:
+      'Choose current or future stay dates, with checkout after check-in.',
+    booking_owner_unavailable:
+      'The Owner is no longer eligible for this booking.',
+    self_booking_not_allowed:
+      'You cannot request a booking at your own Listing.',
+    booking_not_found:
+      'This booking is unavailable or does not belong to your account.',
     invalid_credentials:
       'That email and password don’t match. Please try again.',
     email_already_registered:

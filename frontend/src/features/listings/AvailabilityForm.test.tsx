@@ -2,18 +2,22 @@ import { fireEvent, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { AvailabilityForm } from './AvailabilityForm';
 import { renderPage } from '../../test/render';
-import { json, listing } from '../../test/fixtures';
+import { anonymous, json, listing } from '../../test/fixtures';
 afterEach(() => vi.unstubAllGlobals());
 it('checks real availability and hides stale results after editing', async () => {
-  const fetcher = vi.fn().mockResolvedValue(
-    json({
-      listing_id: listing.id,
-      check_in: '2029-11-10',
-      check_out: '2029-11-12',
-      pet_count: 1,
-      available: true,
-      remaining_capacity_at_tightest_point: 2,
-    }),
+  const fetcher = vi.fn().mockImplementation((path: string) =>
+    Promise.resolve(
+      path.includes('/availability?')
+        ? json({
+            listing_id: listing.id,
+            check_in: '2029-11-10',
+            check_out: '2029-11-12',
+            pet_count: 1,
+            available: true,
+            remaining_capacity_at_tightest_point: 2,
+          })
+        : anonymous(),
+    ),
   );
   vi.stubGlobal('fetch', fetcher);
   renderPage(<AvailabilityForm listing={listing} />);
@@ -27,7 +31,9 @@ it('checks real availability and hides stale results after editing', async () =>
   expect(
     await screen.findByText('Available for your dates'),
   ).toBeInTheDocument();
-  expect(fetcher.mock.calls[0][0]).toContain(
+  expect(
+    fetcher.mock.calls.find(([path]) => path.includes('/availability?'))![0],
+  ).toContain(
     '/availability?check_in=2029-11-10&check_out=2029-11-12&pet_count=1',
   );
   expect(screen.getByText(/doesn’t reserve a space/)).toBeInTheDocument();

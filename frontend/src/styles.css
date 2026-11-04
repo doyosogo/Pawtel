@@ -1647,3 +1647,140 @@ main {
     margin-bottom: 20px;
   }
 }
+
+/* Account and booking journeys share the marketplace palette and controls. */
+.workspace {
+  padding-block: 28px 80px;
+  min-height: 65vh;
+}
+.workspace-nav,
+.action-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-block: 18px;
+}
+.workspace-nav {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 20px;
+  margin-bottom: 36px;
+}
+.workspace-nav a {
+  color: var(--purple);
+  font-weight: 600;
+}
+.workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 20px;
+  margin-block: 24px;
+}
+.workspace-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--cream);
+  padding: clamp(18px, 3vw, 28px);
+  margin-block: 18px;
+  overflow-wrap: anywhere;
+}
+.workspace-panel h2 {
+  font-size: 1.35rem;
+}
+.workspace-panel form {
+  max-width: 540px;
+}
+.field select {
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  width: 100%;
+}
+.booking-request {
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.pet-choices {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.pet-choices label {
+  display: block;
+  margin-block: 12px;
+}
+.pet-choices input,
+.action-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--purple);
+  vertical-align: middle;
+}
+.pet-choices label:has(input:disabled) {
+  color: #645e6d;
+}
+.booking-row {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.booking-row h2 {
+  margin-block: 12px;
+}
+.booking-status {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 650;
+  background: #eee8f8;
+  color: #432873;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+.status-confirmed,
+.status-completed {
+  background: #deeee6;
+  color: #235439;
+}
+.status-declined,
+.status-cancelled,
+.status-expired,
+.status-payment_failed {
+  background: #eee9e5;
+  color: #594538;
+}
+.status-awaiting_payment {
+  background: #fff0ce;
+  color: #62430e;
+}
+.price-breakdown {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+}
+.price-breakdown dd {
+  margin: 0;
+  text-align: right;
+}
+.payment-notice {
+  background: #fffaed;
+}
+@media (max-width: 560px) {
+  .booking-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .workspace-nav {
+    gap: 14px;
+  }
+  .workspace h1 {
+    font-size: 2rem;
+  }
+  .price-breakdown {
+    font-size: 0.9rem;
+  }
+}

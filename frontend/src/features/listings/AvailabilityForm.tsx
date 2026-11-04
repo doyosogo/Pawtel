@@ -1,3 +1,4 @@
+import { BookingRequest } from '../bookings/BookingRequest';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
@@ -132,9 +133,12 @@ export function AvailabilityForm({ listing }: { listing: Listing }) {
         A 10% PAWTEL fee applies to a booking quote. This is a nightly rate, not
         a final quote.
       </p>
-      <p className="coming-note">
-        Online booking is coming to this website next.
-      </p>
+      <BookingRequest
+        key={listing.id}
+        listing={listing}
+        start={start}
+        end={end}
+      />
     </aside>
   );
 }

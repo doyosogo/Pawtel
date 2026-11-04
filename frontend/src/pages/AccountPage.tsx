@@ -52,10 +52,17 @@ export function AccountPage() {
           </p>
         )}
       </div>
-      <p>
-        Pet and booking management screens are coming in the next website
-        release.
-      </p>
+      <nav className="action-row" aria-label="Account tools">
+        <Link className="button secondary" to="/account/pets">
+          My Pets
+        </Link>
+        <Link className="button secondary" to="/account/bookings">
+          My Bookings
+        </Link>
+        <Link className="button secondary" to="/host">
+          Host workspace
+        </Link>
+      </nav>
       <Link className="button secondary" to="/stays">
         Explore stays
       </Link>
@@ -90,8 +97,8 @@ export function HostingPage() {
             <strong>Your Host profile is enabled.</strong>
             <p>{profile.data.bio ?? 'You haven’t added a bio yet.'}</p>
             <p>
-              Listing management screens are coming in the next frontend
-              milestone.
+              <Link to="/host">Open your Host workspace</Link>. Listing editors
+              are coming later.
             </p>
           </div>
         ) : (
