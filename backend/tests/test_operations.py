@@ -15,7 +15,11 @@ from tools.e2e_data import checked_url
 
 
 def configuration(**overrides):
-    return Settings(_env_file=None, app_env="test", **overrides)
+    return Settings(
+        _env_file=None,
+        app_env="test",
+        **{"database_url": None, "test_database_url": None, **overrides},
+    )
 
 
 def request(app, path="/health", **kwargs):

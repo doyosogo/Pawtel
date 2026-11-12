@@ -7,8 +7,7 @@ One User account supports optional Host mode.
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 13 — a production-shaped portfolio MVP with CI, real headless
-E2E journeys and operational diagnostics.** Implemented:
+**Status: Milestone 14 — deployment preparation for a production-shaped portfolio MVP.** Implemented:
 registration/session authentication, private Pet Profiles, optional Host mode and
 verified-host Listing configuration, plus published-only public discovery/detail and
 date-aware capacity snapshots. Owners can request stays with server-priced quotes;
@@ -17,29 +16,29 @@ transactionally. Owners can start Stripe sandbox Checkout; verified paid webhook
 confirm bookings and expiry releases holds. No live charges, payouts, external email
 delivery exists. The Owner sandbox Checkout Elements UI is documented below.
 
-## Engineering highlights and reviewer guide
+## Live demo
 
-- Real PostgreSQL transactions and Listing-first row locks prevent double reservation.
-- Server-owned integer-cent price snapshots protect Booking totals from client changes.
-- Durable Checkout attempts and signed, deduplicated webhooks handle uncertain provider outcomes.
-- Private owner-scoped resources, opaque cookie sessions and CSRF enforce identity boundaries.
-- Cloudinary media metadata and cleanup states account for provider/database partial failures.
-- CI checks locked dependencies, real migrations, full suites and three real UI/API/DB journeys.
-- Minimal health/readiness, safe JSON logs, request IDs and production configuration refusal
-  make deployment behavior inspectable without exposing credentials.
+**Not deployed yet — public URL pending manual account setup and verification.**
+The intended deployment is a synthetic portfolio demonstration, not a real boarding
+service. Demo sign-in credentials are shared privately by the author, never embedded
+in source. See the [manual Render deployment guide](docs/deployment.md).
 
-Start with the [architecture diagram and complete Booking flow](docs/architecture.md),
-[ADR index](docs/adr/README.md), and [CI/E2E/deployment runbook](docs/operations.md).
-The existing local setup and synthetic Owner/Host walkthrough below remain supported.
-Quick checks: backend `.venv/bin/python -m pytest`; frontend `npm ci`,
-`npm test -- --run`, `npm run build`; isolated headless journeys `npm run test:e2e`
-after the dedicated database/browser setup in the runbook. Never run E2E against
-local developer data. No provider secrets are required by automated tests.
+## Reviewer guide
 
-Current limitations: sandbox-only payments, no real email delivery, no production
-rollout or distributed rate-limit guarantee, no load/security audit, and no reviews,
-messaging, notifications, admin or payouts. A remote CI run can only happen after
-a human commits/pushes; adding the badge does not claim a GitHub result.
+React/TypeScript → FastAPI → PostgreSQL, with Stripe sandbox webhooks and
+Cloudinary CDN media. Key engineering work: concurrency-safe reservation locks,
+server-owned price snapshots, webhook idempotency, owner-scoped resources,
+provider failure reconciliation and secure cookie/CSRF boundaries.
+
+- Verified Milestone 14: **519 backend / 141 frontend / 3 real headless E2E tests**.
+- [Architecture and transaction flow](docs/architecture.md) · [ADR index](docs/adr/README.md)
+- [Local/CI operations](docs/operations.md) · [Deployment, costs and launch checklist](docs/deployment.md)
+
+The first GitHub run exposed CI environment leakage into production-shaped fixtures
+and a no-database readiness test. Milestone 14 isolates those settings; a new remote run requires your
+reviewed commit/push. Do not treat the badge as green until that run passes.
+Current boundaries: sandbox-only payments, synthetic invited users, no real email,
+reviews, messaging, notifications, admin or payouts. No production-ready claim.
 
 ## Stack and layout
 

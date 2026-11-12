@@ -117,3 +117,26 @@ See the [ADR index](adr/README.md), [database ERD](database.md),
 [payment design](payments.md), [Host/media design](host-listings.md) and
 [deployment/E2E runbook](operations.md). No microservices, Kubernetes, Redis,
 reviews, messaging or payouts were introduced.
+
+## Selected deployment view (Milestone 14)
+
+```mermaid
+flowchart LR
+    U[User browser] -->|One public HTTPS origin| W[Render Singapore Web Service]
+    W --> R[Compiled React SPA + hashed assets]
+    W --> A[FastAPI / one worker]
+    A -->|Private connection / TLS required| P[(Render managed PostgreSQL 18)]
+    A -->|Sandbox Checkout Sessions| S[Stripe sandbox]
+    S -->|Signed HTTPS webhook inbound| A
+    A -->|Server-side upload/delete| C[Cloudinary]
+    C -->|Public CDN images| U
+```
+
+React and API share one service origin, preserving host-only Secure SameSite=Lax
+cookies and exact Origin/CSRF checks without cross-site cookies. Render's paid
+pre-deploy phase applies migrations once; startup verifies the packaged schema.
+Registration is disabled only in configured portfolio mode; invited synthetic
+users authenticate normally. Small aggregate request budgets are explicitly
+single-process, not distributed. See [deployment guide](deployment.md) for costs,
+manual account actions, credentials, rollback and launch limitations. No deployment
+URL or remote successful release is asserted.

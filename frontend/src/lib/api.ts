@@ -10,10 +10,18 @@ export class ApiError extends Error {
   }
 }
 
+// One same-origin API base in development and the Render full-stack deployment.
+export const API_BASE = '/api/v1';
+export function apiPath(path: string) {
+  if (!path.startsWith('/') || path.startsWith('//') || path.includes('://'))
+    throw new Error('Use a relative API path.');
+  return `${API_BASE}${path}`;
+}
+
 async function send<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`/api/v1${path}`, {
+    response = await fetch(apiPath(path), {
       ...init,
       credentials: 'include',
     });
@@ -94,6 +102,10 @@ export function errorMessage(error: unknown): string {
   if (!(error instanceof ApiError))
     return 'Something went wrong. Please try again.';
   const messages: Record<string, string> = {
+    demo_registration_disabled:
+      'Registration and email delivery are disabled in this portfolio demo. Ask the project author for demo access.',
+    demo_rate_limited:
+      'The shared demo is busy. Please wait a minute before retrying.',
     payments_not_configured:
       'Sandbox payments are not configured. Return to your Booking and try later.',
     booking_not_payable:

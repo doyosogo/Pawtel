@@ -3,10 +3,12 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { errorMessage, write } from '../../lib/api';
 import { clearPrivateData, sessionKey, useSession, type User } from './session';
+import { usePublicConfig } from './publicConfig';
 import { Icon } from '../../components/Icon';
 
 export function AuthPage({ register = false }: { register?: boolean }) {
   const session = useSession();
+  const config = usePublicConfig(register);
   const client = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -75,6 +77,27 @@ export function AuthPage({ register = false }: { register?: boolean }) {
       setBusy(false);
     }
   }
+  if (register && config.isPending)
+    return (
+      <p role="status" className="container">
+        Checking registration availability…
+      </p>
+    );
+  if (
+    register &&
+    (config.isError || config.data?.registration_enabled !== true)
+  )
+    return (
+      <section className="container simple-page">
+        <h1>Registration unavailable</h1>
+        <p>
+          {config.data?.portfolio_demo
+            ? 'Registration and email delivery are disabled in this portfolio demo. Ask the project author for synthetic demo access.'
+            : 'Registration availability could not be checked. Please try again later.'}
+        </p>
+        <Link to="/login">Log in</Link>
+      </section>
+    );
   // No passwords are sent through TanStack mutation variables or retained in cache.
   if (session.data?.state === 'authenticated')
     return <Navigate to={destination} replace />;

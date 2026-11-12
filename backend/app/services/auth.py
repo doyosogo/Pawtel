@@ -79,6 +79,12 @@ def issue_verification_token(db: Session, user_id: UUID, settings: Settings) -> 
 def register(
     db: Session, *, email: str, display_name: str, password: str, settings: Settings
 ) -> RegistrationResult:
+    if settings.portfolio_demo:
+        raise APIError(
+            403,
+            "demo_registration_disabled",
+            "Registration is disabled in this portfolio demo. No email is sent.",
+        )
     encoded = hash_password(password)  # Expensive work before opening a transaction.
     try:
         with db.begin():

@@ -9,9 +9,11 @@ it('registers with truthful email-delivery copy and clears password input', asyn
     .fn()
     .mockImplementation((url: string) =>
       Promise.resolve(
-        url.endsWith('/register')
-          ? json({ user, verification_delivery: 'not_configured' }, 201)
-          : anonymous(),
+        url.endsWith('/config')
+          ? json({ portfolio_demo: false, registration_enabled: true })
+          : url.endsWith('/register')
+            ? json({ user, verification_delivery: 'not_configured' }, 201)
+            : anonymous(),
       ),
     );
   vi.stubGlobal('fetch', fetcher);

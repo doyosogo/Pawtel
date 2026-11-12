@@ -17,6 +17,11 @@ def get_engine() -> Engine:
     return create_engine(
         str(url),
         pool_pre_ping=True,
+        pool_size=2,
+        max_overflow=2,
+        pool_timeout=5,
+        pool_recycle=300,
+        connect_args={"connect_timeout": 5},
         hide_parameters=True,
         isolation_level="READ COMMITTED",
     )

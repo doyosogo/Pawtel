@@ -22,6 +22,8 @@ from app.api.v1.pets import router as pets_router
 from app.core.config import Settings, get_settings
 from app.db.session import dispose_engine
 from app.operations.database import database_ready
+from app.operations.demo import DemoWriteBudget
+from app.operations.frontend import install_frontend
 from app.operations.http import OperationsMiddleware
 from app.operations.logging import configure_logging, log_event
 from app.security.http import AuthHTTPMiddleware
@@ -47,6 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title=settings.app_name,
         lifespan=lifespan,
         debug=False,
+        redirect_slashes=False,
         docs_url=None if settings.app_env == "production" else "/docs",
         redoc_url=None if settings.app_env == "production" else "/redoc",
     )
@@ -69,6 +72,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ],
         expose_headers=["X-Request-ID"],
     )
+    app.add_middleware(DemoWriteBudget, enabled=settings.portfolio_demo)
     app.add_middleware(OperationsMiddleware, settings=settings)
     app.include_router(health_router)
     app.include_router(auth_router)
@@ -79,6 +83,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(bookings_router)
     app.include_router(host_bookings_router)
     app.include_router(payments_router)
+
+    @app.get("/api/v1/config", tags=["configuration"])
+    def public_configuration():
+        return {
+            "portfolio_demo": settings.portfolio_demo,
+            "registration_enabled": not settings.portfolio_demo,
+        }
+
+    if settings.serve_frontend:
+        install_frontend(app)
     return app
 
 

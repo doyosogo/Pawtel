@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, PostgresDsn, SecretStr, model_validator
+from pydantic import Field, PostgresDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     cloudinary_api_secret: SecretStr | None = None
     allowed_hosts: list[str] = []
     debug: bool = False
+    serve_frontend: bool = False
+    portfolio_demo: bool = False
     app_name: str = "PAWTEL API"
     app_env: Literal["development", "test", "production"] = "production"
     stripe_secret_key: SecretStr | None = None
@@ -34,6 +36,15 @@ class Settings(BaseSettings):
     session_lifetime_seconds: int = Field(default=86400, ge=300, le=604800)
     booking_payment_window_seconds: int = Field(default=1800, ge=60, le=86400)
     verification_lifetime_seconds: int = Field(default=86400, ge=300, le=172800)
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def managed_database_url(cls, value):
+        if isinstance(value, str):
+            for prefix in ("postgres://", "postgresql://"):
+                if value.startswith(prefix):
+                    return "postgresql+psycopg://" + value[len(prefix) :]
+        return value
 
     @model_validator(mode="after")
     def validate_security(self):
@@ -116,6 +127,11 @@ class Settings(BaseSettings):
                 "Production requires database, origins/hosts and debug disabled."
             )
         url = make_url(str(self.database_url))
+        if "sslmode" not in url.query:
+            url = url.update_query_dict({"sslmode": "require"})
+            self.database_url = PostgresDsn(url.render_as_string(hide_password=False))
+        if url.query.get("sslmode") not in {"require", "verify-ca", "verify-full"}:
+            raise ValueError("Production database connections require TLS.")
         if (
             url.drivername != "postgresql+psycopg"
             or not url.database

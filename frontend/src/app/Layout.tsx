@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from 'react-router';
 import { useEffect } from 'react';
+import { DemoNotice } from '../components/DemoNotice';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 export function Layout() {
@@ -13,6 +14,7 @@ export function Layout() {
         Skip to content
       </a>
       <Header />
+      <DemoNotice />
       <main id="main-content">
         <Outlet />
       </main>

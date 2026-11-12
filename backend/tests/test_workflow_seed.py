@@ -13,6 +13,7 @@ def test_workflow_refuses_production_before_connecting(monkeypatch):
             DemoSettings(
                 _env_file=None,
                 app_env="production",
+                test_database_url=None,
                 database_url="postgresql+psycopg://pawtel_app:unit-only-long-passphrase@db.example.com/pawtel",
                 backend_cors_origins=["https://app.example.com"],
                 allowed_hosts=["api.example.com"],

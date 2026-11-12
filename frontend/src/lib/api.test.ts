@@ -117,3 +117,10 @@ it('ignores untrusted request reference text', async () => {
     requestId: undefined,
   });
 });
+
+it('resolves one same-origin API base and rejects absolute endpoint paths', async () => {
+  const { apiPath } = await import('./api');
+  expect(apiPath('/auth/me')).toBe('/api/v1/auth/me');
+  expect(() => apiPath('https://other.example.com')).toThrow();
+  expect(() => apiPath('//other.example.com')).toThrow();
+});

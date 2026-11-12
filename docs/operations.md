@@ -266,3 +266,10 @@ These test/lint tooling findings remain unresolved; review compatible upstream f
 as a focused dependency task. Suggested broad/downgrade/`--force` fixes were not
 applied because they can break the established ESLint 10/TypeScript 6 toolchain.
 No Python vulnerability audit was performed; `pip check` checks consistency only.
+
+## Selected hosted path (Milestone 14)
+
+The [deployment guide](deployment.md) supersedes the generic Nginx example for the
+selected Render portfolio deployment. React and FastAPI share one web service;
+Render handles HTTPS, while application headers and explicitly single-process
+aggregate demo budgets remain server-side. The old Nginx example is not deployed.

@@ -1,0 +1,47 @@
+# REVIEW PRICING before you manually apply this Blueprint: these are PAID resources.
+# Nothing in GitHub Actions invokes Render or provisions these resources.
+services:
+  - type: web
+    name: pawtel-portfolio
+    runtime: python
+    region: singapore
+    plan: 0.5c-512mb
+    numInstances: 1
+    autoDeployTrigger: "off"
+    buildCommand: bash deploy/render-build.sh
+    preDeployCommand: cd backend && python -m tools.validate_deployment && python -m alembic upgrade head
+    startCommand: bash deploy/render-start.sh
+    healthCheckPath: /ready
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.8
+      - key: NODE_VERSION
+        value: 24.13.1
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: SERVE_FRONTEND
+        value: "true"
+      - key: PORTFOLIO_DEMO
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pawtel-portfolio-db
+          property: connectionString
+      - key: BACKEND_CORS_ORIGINS
+        sync: false
+      - key: ALLOWED_HOSTS
+        sync: false
+# Leave Stripe/Cloudinary omitted until you manually configure complete sandbox/media settings.
+databases:
+  - name: pawtel-portfolio-db
+    region: singapore
+    plan: 0.1c-256mb
+    postgresMajorVersion: "18"
+    databaseName: pawtel_portfolio
+    user: pawtel_portfolio
+    diskSizeGB: 1
+    ipAllowList: []

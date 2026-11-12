@@ -93,6 +93,7 @@ def make_api(db_session, settings):
             else Settings(
                 _env_file=None,
                 app_env="production",
+                test_database_url=None,
                 database_url="postgresql+psycopg://pawtel_app:unit-only-long-passphrase@db.example.com/pawtel",
                 allowed_hosts=["api.example.com"],
                 session_cookie_secure=True,

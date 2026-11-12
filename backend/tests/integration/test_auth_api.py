@@ -124,7 +124,12 @@ def test_login_creates_digest_only_session_and_me_is_safe(api, db_session):
     assert me.headers["cache-control"] == "no-store"
 
 
-def test_production_cookie_secure_host_only_and_csrf(make_api):
+def test_production_cookie_secure_host_only_and_csrf(make_api, monkeypatch):
+    # CI exports a test URL globally; production-shaped fixture must isolate it.
+    monkeypatch.setenv(
+        "TEST_DATABASE_URL",
+        "postgresql+psycopg://pawtel_test:ci-only@localhost/pawtel_test",
+    )
     api = make_api(secure=True)
     assert api.register().status_code == 201
     response = api.login()
