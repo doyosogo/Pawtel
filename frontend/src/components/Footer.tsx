@@ -10,9 +10,9 @@ export function Footer() {
           <p>A little holiday for them, too.</p>
         </div>
         <p className="demo-disclosure">
-          Portfolio demo · Fictional hosts and stays.
+          Portfolio demo · Seed hosts and stays are fictional.
           <br />
-          Images are original demo illustrations, not accommodation photos.
+          Listings without photos use labelled demo illustrations.
         </p>
         <nav aria-label="Footer">
           <Link to="/stays">Explore stays</Link>

@@ -20,6 +20,7 @@ from app.models.enums import (
 if TYPE_CHECKING:
     from app.models.accounts import HostProfile
     from app.models.bookings import Booking
+    from app.models.media import ListingImage
 
 
 class Listing(UUIDPrimaryKey, Timestamps, Base):
@@ -52,6 +53,11 @@ class Listing(UUIDPrimaryKey, Timestamps, Base):
         listing_status_type, server_default=ListingStatus.DRAFT.value
     )
 
+    images: Mapped[list[ListingImage]] = relationship(
+        back_populates="listing",
+        order_by="(ListingImage.sort_order, ListingImage.id)",
+        passive_deletes="all",
+    )
     host: Mapped[HostProfile] = relationship(back_populates="listings")
     accepted_species: Mapped[list[ListingAcceptedSpecies]] = relationship(
         back_populates="listing", cascade="all, delete-orphan", passive_deletes=True

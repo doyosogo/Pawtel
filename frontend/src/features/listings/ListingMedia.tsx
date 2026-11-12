@@ -1,24 +1,31 @@
+import { useState } from 'react';
 import { mediaFor } from './media';
-/** Replace src with real Listing image URLs when storage is implemented. */
 export function ListingMedia({
   id,
   className = '',
   src,
+  alt = '',
   eager = false,
 }: {
   id: string;
   className?: string;
   src?: string;
+  alt?: string;
   eager?: boolean;
 }) {
+  const [failed, setFailed] = useState<string>();
+  const real = !!src && failed !== src;
   return (
     <div className={`listing-media ${className}`}>
       <img
-        src={src ?? mediaFor(id)}
-        alt=""
+        src={real ? src : mediaFor(id)}
+        alt={real ? alt : ''}
         loading={eager ? 'eager' : 'lazy'}
+        onError={() => {
+          if (real) setFailed(src);
+        }}
       />
-      <span className="media-label">Demo illustration</span>
+      {!real && <span className="media-label">Demo illustration</span>}
     </div>
   );
 }

@@ -5,7 +5,7 @@ of dogs/cats and accommodation hosts. One account will support optional Host mod
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 11 — marketplace, Booking workflows and sandbox Checkout Elements.** Implemented:
+**Status: Milestone 12 — Host onboarding, Listing management and Cloudinary media.** Implemented:
 registration/session authentication, private Pet Profiles, optional Host mode and
 verified-host Listing configuration, plus published-only public discovery/detail and
 date-aware capacity snapshots. Owners can request stays with server-priced quotes;
@@ -359,7 +359,7 @@ enforces ownership, active accounts, verified email, CSRF and Booking transition
   status/deadline, manual refresh and cancellation of REQUESTED/AWAITING_PAYMENT.
 - `/host`, `/host/bookings` and `/:bookingId`: existing Listing summaries, inbox,
   safe Owner/Pet information and explicit accept/decline actions. Non-host accounts
-  receive an explanation. Host setup and full Listing editors remain later work.
+  receive onboarding. Milestone 12 adds Host setup, Listing editors and photos.
 
 Request a Booking from Listing detail using the dates above the Pet selector.
 Public availability uses its entered pet count; the real Booking uses the selected
@@ -447,7 +447,7 @@ Email delivery remains unconfigured. Normal newly registered users can manage
 Pets, but require verified email for Bookings/hosting. Only the explicitly synthetic
 local seed identities are marked verified by tooling. Never expose verification
 tokens through the UI. Stripe frontend integration is documented below. Reviews,
-messaging, image uploads and full Host Listing CRUD remain out of scope.
+messaging remain out of scope. Milestone 12 adds Listing management and uploads.
 
 ## Stripe Checkout Elements website (Milestone 11)
 
@@ -488,3 +488,55 @@ The only backend compatibility change replaces the removed Endive creation input
 `payment_method_types` with `allowed_payment_method_types`, preserving card-only
 Elements Checkout. No Booking/webhook/security rules were changed. See
 [the complete payment walkthrough and lifecycle notes](docs/payments.md#owner-checkout-elements-website-milestone-11).
+
+## Host onboarding, Listing management and photos (Milestone 12)
+
+Hosts can now demonstrate the product with their own Listings: `/host` offers
+**Become a Host** for an eligible account without HostProfile, or a workspace with
+bio editing, Listing summary and Booking inbox. `/host/listings` lists owned
+Listings; create a draft at `/host/listings/new` and edit at
+`/host/listings/:listingId/edit`. Publish, move to draft and confirmed archive use
+the existing lifecycle. Archived Listings are read-only and Booking history stays.
+
+AUD inputs convert decimal strings to exact integer cents. Configure DOG/CAT
+species, location, capacity and prices. Drafts can omit species; publication needs
+at least one. Capacity is simultaneous Pets; existing reservations constrain
+reductions. Hosts do not set PAWTEL's service fee. Location fields do not imply
+geocoding or geographic validation.
+
+Cloudinary provides Listing media through authenticated backend uploads. Add
+CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET privately to
+ignored root `.env`; never add VITE_ prefixes. Install updated backend dependencies
+and run `python -m alembic upgrade head` before starting the backend. No provider
+credentials are configured by the application or required for normal automated
+tests. Without them, drafts/Listing management and seeded placeholders still work.
+
+Save a draft before adding photos. Up to six JPEG/PNG/WebP images are supported,
+5 MiB each, 200–6000 pixels per side, maximum 24 megapixels, non-animated. The server
+checks decoded bytes and strips metadata. Upload/preview, reorder using explicit
+buttons, and remove in the editor. The first photo becomes the public card cover;
+detail shows the gallery. No photos or failed delivery uses labelled placeholders.
+External provider/DB failures retain tracked cleanup state; use
+`python -m app.media.cleanup` in the configured backend to retry cleanup. See the
+[Host/media setup and failure guide](docs/host-listings.md#host-website-and-listing-media-milestone-12)
+and [media ADR](docs/adr/0008-cloudinary-listing-media.md).
+
+Manual walkthrough (you perform browser actions):
+
+1. Start backend and frontend as above; privately configure Cloudinary for actual
+   photo testing. Existing demo Host can log in, or use a verified account without
+   HostProfile and choose Become a Host. Normal unverified accounts still require
+   verification; email delivery is not implemented.
+2. Create a Listing and leave it Draft. Edit description/location, AUD prices,
+   simultaneous capacity and DOG/CAT selection. Confirm it is not public yet.
+3. Upload photos, inspect preview/alt text, change cover order and remove a spare
+   photo. Check visible errors for invalid format/oversize or missing provider setup.
+4. Publish, log out, search the chosen suburb, inspect the card cover and gallery.
+5. Return as Host; move to draft and republish if desired. Confirm archive, log out
+   and verify public search/detail no longer expose the Listing.
+6. Resize desktop/tablet/mobile and keyboard-test forms, confirmations and photo
+   move/remove controls. No automated browser or screenshot verification was used.
+
+No real cloud upload was performed by the automated test suite. Storage credentials,
+provider/CDN behavior and visual review require your manual verification. Existing
+seed Listings intentionally keep their deterministic SVGs without cloud assets.

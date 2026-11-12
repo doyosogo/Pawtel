@@ -12,6 +12,7 @@ from pydantic import (
 )
 
 from app.models.enums import AustralianState, ListingStatus, PetSpecies
+from app.schemas.media import ImageOutput
 
 if TYPE_CHECKING:
     from app.models import Listing
@@ -108,6 +109,7 @@ class ListingPatch(BaseModel):
 
 
 class ListingOutput(BaseModel):
+    images: list[ImageOutput] = Field(default_factory=list)
     id: UUID
     title: str
     description: str
@@ -126,6 +128,11 @@ class ListingOutput(BaseModel):
     @classmethod
     def from_listing(cls, listing: Listing):
         return cls(
+            images=[
+                ImageOutput.model_validate(row)
+                for row in listing.images
+                if row.status == "READY"
+            ],
             id=listing.id,
             title=listing.title,
             description=listing.description,

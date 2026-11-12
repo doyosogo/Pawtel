@@ -14,6 +14,7 @@ from app.schemas.discovery import (
     SearchQuery,
     StayQuery,
 )
+from app.schemas.media import ImageOutput
 
 
 def peak_occupancy(stay: StayQuery, listing_id=None):
@@ -78,6 +79,7 @@ def loaded(query):
         .joinedload(HostProfile.user)
         .load_only(User.display_name),
         joinedload(Listing.accepted_species),
+        joinedload(Listing.images),
     )
 
 
@@ -98,6 +100,11 @@ def public_output(listing: Listing) -> PublicListing:
                 "max_pet_capacity",
             )
         },
+        images=[
+            ImageOutput.model_validate(row)
+            for row in listing.images
+            if row.status == "READY"
+        ],
         accepted_species=sorted(row.species for row in listing.accepted_species),
         host=PublicHost(
             display_name=listing.host.user.display_name, bio=listing.host.bio

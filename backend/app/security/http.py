@@ -1,4 +1,5 @@
 import logging
+import re
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -43,9 +44,13 @@ class AuthHTTPMiddleware(BaseHTTPMiddleware):
                         "X-PAWTEL-Request: 1 is required.",
                     )
                 )
-            if (
-                request.headers.get("content-type", "").split(";")[0].strip().lower()
-                != "application/json"
+            if request.headers.get("content-type", "").split(";")[
+                0
+            ].strip().lower() != "application/json" and not (
+                request.method == "POST"
+                and re.fullmatch(
+                    r"/api/v1/host/listings/[0-9a-fA-F-]{36}/images", request.url.path
+                )
             ):
                 return self.no_store(
                     error_response(415, "json_required", "Use application/json.")

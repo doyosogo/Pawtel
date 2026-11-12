@@ -1800,3 +1800,64 @@ main {
     grid-template-columns: 1fr;
   }
 }
+
+.field textarea {
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  width: 100%;
+  background: #fff;
+  resize: vertical;
+}
+.listing-form {
+  max-width: 850px;
+}
+.listing-form .workspace-grid {
+  margin-block: 0;
+}
+.photo-manager img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.uploaded-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-block: 24px;
+}
+.uploaded-gallery > :first-child {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+.uploaded-gallery .listing-media {
+  min-height: 180px;
+  aspect-ratio: 4/3;
+}
+@media (max-width: 800px) {
+  .uploaded-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .uploaded-gallery > :first-child {
+    grid-column: span 2;
+    grid-row: auto;
+  }
+}
+@media (max-width: 560px) {
+  .uploaded-gallery {
+    grid-template-columns: 1fr;
+  }
+  .uploaded-gallery > :first-child {
+    grid-column: auto;
+  }
+}
+.upload-preview {
+  width: min(100%, 320px);
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-block: 16px;
+}

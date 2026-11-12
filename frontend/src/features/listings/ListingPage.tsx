@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router';
 import { ApiError, errorMessage } from '../../lib/api';
-import { Icon } from '../../components/Icon';
 import { listingDetail } from './api';
-import { ListingMedia } from './ListingMedia';
+import { ListingGallery } from './ListingGallery';
 import { AvailabilityForm } from './AvailabilityForm';
 
 export function ListingDetailPage() {
@@ -51,21 +50,7 @@ export function ListingDetailPage() {
           {listing.suburb}, {listing.state} {listing.postcode} · Australia
         </p>
       </div>
-      <div className="detail-gallery">
-        <ListingMedia id={listing.id} eager />
-        <div className="gallery-aside">
-          <div className="gallery-quote">
-            <Icon name="paw" size={30} />
-            <p>
-              Somewhere new.
-              <br />
-              That feels like home.
-            </p>
-            <span>A place to settle in</span>
-          </div>
-          <ListingMedia id={listing.id + 'second'} eager />
-        </div>
-      </div>
+      <ListingGallery listing={listing} />
       <div className="detail-layout">
         <div className="detail-content">
           <section className="host-heading">
@@ -104,10 +89,12 @@ export function ListingDetailPage() {
               Checkout day is not an occupied night. Availability can change
               until a booking is accepted.
             </p>
-            <p className="field-help">
-              The illustrations show the mood of this demo, not the actual
-              accommodation.
-            </p>
+            {!listing.images?.length && (
+              <p className="field-help">
+                The illustrations show the mood of this demo, not the actual
+                accommodation.
+              </p>
+            )}
           </section>
         </div>
         <AvailabilityForm listing={listing} />

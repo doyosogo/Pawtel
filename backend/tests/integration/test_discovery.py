@@ -100,6 +100,7 @@ def test_public_visibility_privacy_and_missing(api, market):
     assert result.status_code == 200
     assert result.json()["host"] == {"display_name": "Public Host", "bio": "Public bio"}
     assert set(result.json()) == {
+        "images",
         "id",
         "title",
         "description",

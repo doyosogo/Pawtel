@@ -21,7 +21,7 @@ def owned_listing(db: Session, host_id: UUID, listing_id: UUID) -> Listing:
         db.execute(
             select(Listing)
             .where(Listing.id == listing_id, Listing.host_id == host_id)
-            .options(joinedload(Listing.accepted_species))
+            .options(joinedload(Listing.accepted_species), joinedload(Listing.images))
             .execution_options(populate_existing=True)
         )
         .unique()
@@ -59,9 +59,9 @@ def list_listings(
         )
         result = list(
             db.execute(
-                query.options(joinedload(Listing.accepted_species)).order_by(
-                    Listing.created_at, Listing.id
-                )
+                query.options(
+                    joinedload(Listing.accepted_species), joinedload(Listing.images)
+                ).order_by(Listing.created_at, Listing.id)
             )
             .unique()
             .scalars()

@@ -97,8 +97,8 @@ export function HostingPage() {
             <strong>Your Host profile is enabled.</strong>
             <p>{profile.data.bio ?? 'You haven’t added a bio yet.'}</p>
             <p>
-              <Link to="/host">Open your Host workspace</Link>. Listing editors
-              are coming later.
+              <Link to="/host">Open your Host workspace</Link> to manage
+              Listings, photos and Booking requests.
             </p>
           </div>
         ) : (
@@ -107,10 +107,7 @@ export function HostingPage() {
               Hosting on PAWTEL means welcoming dogs or cats for boarding stays.
               You can be a host and a pet owner with the same account.
             </p>
-            <p>
-              Host setup tools are coming to this website next. Hosting requires
-              an active account with a verified email.
-            </p>
+            <p>Hosting requires an active account with a verified email.</p>
             {!user && session.data?.state !== 'inactive' && (
               <Link className="button" to="/register?next=%2Fhosting">
                 Create an account
@@ -123,6 +120,11 @@ export function HostingPage() {
               </p>
             )}
           </>
+        )}
+        {user?.email_verified_at && (
+          <Link className="button" to="/host">
+            Open Host workspace / Become a Host
+          </Link>
         )}
         <Link className="text-link" to="/stays">
           Explore the marketplace →

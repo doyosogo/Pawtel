@@ -13,6 +13,8 @@ import { BookingDetailPage } from '../features/bookings/BookingDetailPage';
 import { HostGate, HostPage } from '../features/host/HostPage';
 import { CheckoutPage } from '../features/payments/CheckoutPage';
 import { PaymentReturnPage } from '../features/payments/PaymentReturnPage';
+import { HostListingsPage } from '../features/host/HostListingsPage';
+import { ListingFormPage } from '../features/host/ListingFormPage';
 export const router = createBrowserRouter([
   {
     element: <Layout />,
@@ -49,6 +51,15 @@ export const router = createBrowserRouter([
             element: <HostGate />,
             children: [
               { path: '/host', element: <HostPage /> },
+              { path: '/host/listings', element: <HostListingsPage /> },
+              {
+                path: '/host/listings/new',
+                element: <ListingFormPage create />,
+              },
+              {
+                path: '/host/listings/:listingId/edit',
+                element: <ListingFormPage />,
+              },
               { path: '/host/bookings', element: <BookingsPage host /> },
               {
                 path: '/host/bookings/:bookingId',

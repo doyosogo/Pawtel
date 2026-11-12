@@ -136,3 +136,115 @@ returns 409 listing_capacity_reserved and rolls back the full Listing update. Th
 existing parent UPDATE coordinates with Booking acceptance's Listing lock. Archive
 preserves reservations but blocks new requests/acceptance; Owner cancellation still
 releases them. See [Booking protocol](bookings.md).
+
+## Host website and Listing media (Milestone 12)
+
+Verified authenticated Users without HostProfile can open `/host` and choose
+**Become a Host**, with an optional bio. This uses the existing profile POST; bio
+editing uses PATCH. Owner and Host remain one User account. Unverified Users get
+truthful no-email-delivery guidance; there is no verification bypass.
+
+`/host` provides profile editing, Listing counts, recent pending-request summary,
+Booking inbox navigation and Create Listing. `/host/listings` shows owned active
+Listings by default; DRAFT/PUBLISHED/ARCHIVED filters use the existing API. Create
+at `/host/listings/new`; edit at `/host/listings/:id/edit`. Only changed fields are
+patched. Archived Listings are read-only and preserved for Booking history.
+
+Forms contain title/description, structured Australian suburb/state/postcode,
+capacity, base/additional-pet nightly AUD prices and DOG/CAT accepted-species
+checkboxes. Currency is parsed from decimal strings through integer/BigInt cents,
+not floating-point multiplication. Negative/malformed/more-than-two-decimal prices
+are rejected. Base price covers the first Pet; extra price applies per additional
+Pet per night. Hosts do not configure the 10% service fee. Capacity is Pets staying
+at the same time, not a Booking count; existing reservation floors still apply.
+Postcode/suburb combinations are not geographically validated. There are no maps.
+
+New Listings are DRAFT and hidden from guests. Empty accepted species is permitted
+in drafts, but publication requires at least one. Explicit Publish listing, Move
+to draft and confirmed Archive listing actions map to existing PATCH/DELETE rules.
+No Host IDs, User IDs, timestamps or arbitrary lifecycle metadata are submitted.
+
+### Image configuration, limits and endpoints
+
+Cloudinary is the sole selected media provider. Install backend dependencies from
+pyproject.toml; Cloudinary SDK and Pillow are new dependencies. Configure the
+following privately in ignored root `.env`, using an isolated development product
+environment. Never prefix these with VITE_ or commit their values:
+
+- CLOUDINARY_CLOUD_NAME
+- CLOUDINARY_API_KEY
+- CLOUDINARY_API_SECRET
+
+No unsigned browser preset, master credential in React, custom image server or
+new frontend SDK is needed. Cloud name appears in intended public delivery URLs;
+server API credentials do not. Empty .env.example values do not enable uploads.
+Save the draft first, then upload photos in its editor. Lack of provider setup does
+not prevent profile/Listing editing, publication or deterministic demo imagery.
+
+Apply the new additive migration before starting the updated backend:
+
+```zsh
+cd ~/Desktop/PAWTEL/backend
+source .venv/bin/activate
+python -m alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+Image API, all behind existing verified active User/Host ownership and CSRF rules:
+
+- POST `/api/v1/host/listings/{id}/images?alt_text=...`: binary File body with its
+  image Content-Type, X-PAWTEL-Request and X-CSRF-Token. Returns safe metadata (201).
+- PATCH `/api/v1/host/listings/{id}/images/order`: JSON image_ids containing exactly
+  the current READY set in desired order. Stale/foreign/duplicate IDs are rejected.
+- DELETE `/api/v1/host/listings/{id}/images/{imageId}`: hides the association and
+  returns cleanup_pending so failed provider deletion is visible.
+
+Private/public Listing DTOs now include ordered `images`: id, HTTPS delivery URL,
+alt text and sort order only. UPLOADING/DELETE_PENDING and provider IDs/credentials
+are not public fields. Images are eager-loaded with Listings to avoid N+1 queries.
+
+Limits: six images per Listing including pending intents; 5 MiB incoming and
+re-encoded size; JPEG/PNG/WebP; one frame only; 200–6000 pixels on each side and at
+most 24 megapixels. MIME must match decoded format. Pillow validates actual bytes,
+loads/normalizes pixels, applies EXIF orientation and re-encodes without original
+metadata/trailing content. Filenames, client URLs and claimed Host identity are
+not trusted. React performs preliminary type/size checks, but the backend decides.
+
+The editor offers a selected-file preview, uploaded thumbnails, optional alt text,
+explicit move-earlier/later controls and remove. First READY photo is the cover.
+Public cards use the uploaded cover; detail displays a responsive ordered gallery.
+Missing or failed image delivery falls back to labelled original demo illustrations.
+Existing fictional seeds create no media rows and need no external uploads.
+
+### Failure recovery and operations
+
+UPLOADING is committed before the provider call; READY is committed only after
+provider success and rechecking ownership/archive state. Pending slots serialize
+on the Listing row to enforce six under competing uploads. Provider calls occur
+outside transactions. Provider failures may have an uncertain remote outcome and
+retain the intent for later cleanup. DB association failure attempts compensating
+deletion; if that fails or the process crashes, the intent remains recoverable.
+The API returns a safe error asking the Host to refresh before retrying.
+
+Deletion hides the photo in the DB before requesting provider deletion. If provider
+deletion fails, cleanup_pending is true and DELETE_PENDING remains. Run in a
+configured backend environment:
+
+```zsh
+python -m app.media.cleanup
+```
+
+The command processes at most 100 tracked delete intents or abandoned uploads
+older than 15 minutes, ordered oldest first, and never targets READY images. It
+prints counts only. Repeat as necessary and schedule/monitor it before production.
+If a DB commit outcome is uncertain, cleanup rechecks current state and preserves
+READY associations. This is not a distributed transaction. Lost DB records or an
+exceptionally late provider write require manual inventory reconciliation under
+`pawtel/listings/` rather than broad deletion of unrelated provider assets.
+
+Removing an image requests Cloudinary CDN invalidation; propagation is eventual.
+Archiving a Listing hides it from PAWTEL public APIs but preserves its READY photos
+for history; it does not promise that previously public URLs become private.
+Photos must not contain sensitive personal data. Use provider quotas and separate
+development/production environments; moderation, rate limiting and operational
+monitoring remain production work. See [ADR 0008](adr/0008-cloudinary-listing-media.md).

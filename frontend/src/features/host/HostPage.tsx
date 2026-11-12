@@ -1,9 +1,9 @@
+import { useBookings, type Booking } from '../bookings/api';
 import { Link, Outlet } from 'react-router';
-import { useQuery } from '@tanstack/react-query';
 import { useHostProfile, useSession } from '../auth/session';
-import { get } from '../../lib/api';
-import { aud } from '../listings/api';
 import { RequestError } from '../account/RequestError';
+import { HostProfileForm } from './HostProfileForm';
+import { useHostListings, type HostListing } from './api';
 export function HostGate() {
   const session = useSession();
   const profile = useHostProfile(session.data);
@@ -17,78 +17,71 @@ export function HostGate() {
     );
   if (!profile.data)
     return (
-      <section className="workspace-panel">
+      <>
         <h1>Your Host workspace</h1>
-        <p>
-          You do not have a Host profile yet. Host setup and Listing editors are
-          coming in a later step.
-        </p>
-        <p>For local testing, use the synthetic demo Host from the README.</p>
-        <Link to="/stays">Explore stays</Link>
-      </section>
+        <HostProfileForm onboard />
+      </>
     );
-  return <Outlet />;
-}
-interface HostListing {
-  id: string;
-  title: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-  suburb: string;
-  state: string;
-  base_nightly_price_cents: number;
+  return (
+    <>
+      <nav className="workspace-nav" aria-label="Host tools">
+        <Link to="/host">Overview</Link>
+        <Link to="/host/listings">My Listings</Link>
+        <Link to="/host/bookings">Booking inbox</Link>
+      </nav>
+      <Outlet />
+    </>
+  );
 }
 export function HostPage() {
   const session = useSession();
-  const userId =
-    session.data?.state === 'authenticated' ? session.data.user.id : null;
-  const listings = useQuery({
-    queryKey: ['host-listings', userId],
-    queryFn: ({ signal }) => get<HostListing[]>('/host/listings', signal),
-    retry: false,
-    meta: { private: true },
-  });
+  const profile = useHostProfile(session.data);
+  const listings = useHostListings();
+  const inbox = useBookings(true, undefined, 'REQUESTED');
+  const pending = inbox.data as Booking[] | undefined;
+  const items = listings.data as HostListing[] | undefined;
   return (
     <>
       <p className="eyebrow">WELCOME HOME, HOST</p>
       <h1>Your Host workspace</h1>
-      <p>
-        Your Host profile is enabled. Review requests and help plan their next
-        stay.
-      </p>
-      <Link className="button" to="/host/bookings">
-        Open booking inbox
-      </Link>
-      <h2>Your Listings</h2>
+      <p>Welcome pets, prepare your Listings and review incoming requests.</p>
+      <div className="action-row">
+        <Link className="button" to="/host/listings/new">
+          Create Listing
+        </Link>
+        <Link className="button secondary" to="/host/listings">
+          My Listings
+        </Link>
+        <Link className="button secondary" to="/host/bookings">
+          Open booking inbox
+        </Link>
+      </div>
       {listings.isPending ? (
         <p role="status">Loading Listings…</p>
       ) : listings.isError ? (
-        <RequestError
-          error={listings.error}
-          retry={() => void listings.refetch()}
-        />
-      ) : !listings.data.length ? (
-        <p>No Listings yet. Listing editors will follow in a later step.</p>
+        <RequestError error={listings.error} />
       ) : (
-        <div className="workspace-grid">
-          {listings.data.map((l) => (
-            <article className="workspace-panel" key={l.id}>
-              <h3>{l.title}</h3>
-              <p>
-                {l.suburb}, {l.state} ·{' '}
-                {l.status === 'PUBLISHED'
-                  ? 'Published'
-                  : l.status === 'DRAFT'
-                    ? 'Draft'
-                    : 'Archived'}
-              </p>
-              <p>{aud(l.base_nightly_price_cents)} AUD / night</p>
-              {l.status === 'PUBLISHED' && (
-                <Link to={`/stays/${l.id}`}>View public Listing</Link>
-              )}
-            </article>
-          ))}
-        </div>
+        <p>
+          {items?.filter((l) => l.status === 'PUBLISHED').length ?? 0} published
+          · {items?.filter((l) => l.status === 'DRAFT').length ?? 0} drafts.{' '}
+          <Link to="/host/listings?status=ARCHIVED">View archived</Link>
+        </p>
       )}
+      <section className="workspace-panel">
+        <h2>Booking requests</h2>
+        {inbox.isPending ? (
+          <p role="status">Checking requests…</p>
+        ) : inbox.isError ? (
+          <RequestError error={inbox.error} />
+        ) : (
+          <p>
+            {pending?.length === 20 ? '20+' : (pending?.length ?? 0)} requests
+            waiting for review.{' '}
+            <Link to="/host/bookings?status=REQUESTED">Review requests</Link>
+          </p>
+        )}
+      </section>
+      <HostProfileForm bio={profile.data?.bio} />
     </>
   );
 }

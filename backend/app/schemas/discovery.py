@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.enums import AustralianState, PetSpecies
 from app.schemas.host import Postcode, Suburb
+from app.schemas.media import ImageOutput
 
 Price = Annotated[int, Field(ge=0, le=9007199254740991)]
 PetCount = Annotated[int, Field(ge=1, le=2147483647)]
@@ -63,6 +64,7 @@ class PublicHost(BaseModel):
 
 
 class PublicListing(BaseModel):
+    images: list[ImageOutput] = Field(default_factory=list)
     id: UUID
     title: str
     description: str

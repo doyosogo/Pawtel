@@ -9,6 +9,7 @@ from alembic import command
 pytestmark = pytest.mark.integration
 
 TABLES = {
+    "listing_images",
     "users",
     "auth_sessions",
     "email_verification_tokens",
@@ -39,6 +40,11 @@ def test_migration_downgrade_upgrade_on_empty_test_database(db_engine):
     config.attributes["database_url"] = db_engine.url
     legacy_id = None
     try:
+        # Exercise the additive media revision alone on the empty test database.
+        command.downgrade(config, "b690ce0b281d")
+        assert "listing_images" not in inspect(db_engine).get_table_names()
+        assert "payment_attempts" in inspect(db_engine).get_table_names()
+        command.upgrade(config, "head")
         # Exercise the payment revision alone before the existing full round trip.
         command.downgrade(config, "868589ec460a")
         assert not {"payment_attempts", "stripe_webhook_events"} & set(

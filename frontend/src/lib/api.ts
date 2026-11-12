@@ -97,6 +97,26 @@ export function errorMessage(error: unknown): string {
       'The secure checkout could not be opened. Check your Booking before trying again.',
     checkout_temporarily_unavailable:
       'Checkout is temporarily unavailable. Check your Booking status; you can retry opening checkout for this Booking.',
+    host_profile_exists:
+      'Host mode is already enabled. Refresh your workspace.',
+    host_profile_required: 'Become a Host before managing Listings.',
+    listing_not_found:
+      'This Listing is unavailable or does not belong to your account.',
+    listing_archived: 'Archived Listings are read-only and cannot be restored.',
+    listing_not_ready:
+      'Choose at least one accepted species before publishing.',
+    listing_capacity_reserved:
+      'Capacity cannot be reduced below existing reservations. Keep enough space for accepted stays.',
+    media_not_configured:
+      'Photo storage is not configured yet. Your Listing details are saved separately; try uploading after storage setup.',
+    media_provider_failed:
+      'The photo upload could not be confirmed. Refresh your Listing before retrying. Any incomplete upload is tracked for cleanup.',
+    media_association_failed:
+      'The photo could not be linked to your Listing. Refresh before retrying; storage cleanup is tracked.',
+    image_limit:
+      'A Listing supports six images, including pending cleanup. Remove a photo or try after cleanup.',
+    image_changed:
+      'Photos have changed. Refresh your Listing before trying again.',
     booking_capacity_unavailable:
       'Those dates are no longer available for this request. Try different dates or fewer pets.',
     booking_busy:
@@ -136,5 +156,22 @@ export function errorMessage(error: unknown): string {
     (error.status >= 500
       ? 'PAWTEL is taking a moment. Please try again shortly.'
       : error.message)
+  );
+}
+
+// Only this ownership-protected endpoint accepts binary images; JSON writes keep their contract.
+export async function uploadImage(listingId: string, file: File, alt: string) {
+  const csrf = await get<{ csrf_token: string }>('/auth/csrf');
+  return send(
+    `/host/listings/${encodeURIComponent(listingId)}/images?${new URLSearchParams({ alt_text: alt })}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': file.type,
+        'X-PAWTEL-Request': '1',
+        'X-CSRF-Token': csrf.csrf_token,
+      },
+      body: file,
+    },
   );
 }

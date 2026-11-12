@@ -1,6 +1,13 @@
 import { get } from '../../lib/api';
 export type Species = 'DOG' | 'CAT';
+export interface ListingImage {
+  id: string;
+  url: string;
+  alt_text: string;
+  sort_order: number;
+}
 export interface Listing {
+  images?: ListingImage[];
   id: string;
   title: string;
   description: string;

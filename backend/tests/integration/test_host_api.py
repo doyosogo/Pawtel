@@ -209,6 +209,7 @@ def test_create_listing_is_owned_draft_and_response_is_explicit(hosts, db_sessio
     )
     assert listing["status"] == "DRAFT" and listing["country_code"] == "AU"
     assert set(listing) == {
+        "images",
         "id",
         "title",
         "description",

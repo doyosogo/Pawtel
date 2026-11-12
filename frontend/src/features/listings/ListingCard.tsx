@@ -12,7 +12,11 @@ export function ListingCard({ listing }: { listing: Listing }) {
         to={`/stays/${listing.id}${stay.size ? `?${stay}` : ''}`}
         className="listing-card-link"
       >
-        <ListingMedia id={listing.id} />
+        <ListingMedia
+          id={listing.id}
+          src={listing.images?.[0]?.url}
+          alt={listing.images?.[0]?.alt_text}
+        />
         <div className="card-location">
           {listing.suburb}, {listing.state}
           <span>

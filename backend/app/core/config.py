@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=ROOT / ".env", extra="ignore", hide_input_in_errors=True
     )
+    cloudinary_cloud_name: str | None = None
+    cloudinary_api_key: SecretStr | None = None
+    cloudinary_api_secret: SecretStr | None = None
     app_name: str = "PAWTEL API"
     app_env: Literal["development", "test", "production"] = "production"
     stripe_secret_key: SecretStr | None = None
