@@ -66,7 +66,7 @@ def test_production_fails_closed_on_insecure_config():
         )
     with pytest.raises(ValidationError):
         Settings(_env_file=None, app_env="test", backend_cors_origins=["*"])
-    settings = Settings(_env_file=None)
+    settings = Settings(_env_file=None, app_env="test")
     assert settings.session_cookie_secure
     assert settings.session_cookie_name == "__Host-pawtel_session"
     assert settings.backend_cors_origins == []

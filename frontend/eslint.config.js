@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 import hooks from 'eslint-plugin-react-hooks';
 import refresh from 'eslint-plugin-react-refresh';
 export default tseslint.config(
-  { ignores: ['dist', 'coverage'] },
+  { ignores: ['dist', 'coverage', 'e2e-results', 'playwright-report'] },
   js.configs.recommended,
   tseslint.configs.recommended,
   {
@@ -18,6 +18,10 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
     },
+  },
+  {
+    files: ['e2e/**/*.ts', 'e2e/**/*.mjs', 'playwright.config.ts'],
+    languageOptions: { globals: globals.node },
   },
   { files: ['*.js'], languageOptions: { globals: globals.node } },
 );

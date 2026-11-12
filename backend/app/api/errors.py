@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException
 
+from app.operations.logging import log_event
+
 
 class APIError(Exception):
     def __init__(self, status: int, code: str, message: str):
@@ -30,6 +32,7 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(SQLAlchemyError)
     async def database_error(request: Request, error: SQLAlchemyError):
+        log_event("database_error", level=40, exception_type=type(error).__name__)
         # PostgreSQL error DETAIL can include whole rows, even with hidden params.
         # Never log/serialize this exception, statement or parameters.
         return error_response(

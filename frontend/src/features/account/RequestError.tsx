@@ -25,6 +25,9 @@ export function RequestError({
   return (
     <div className="notice" role="alert">
       <p>{errorMessage(error)}</p>
+      {error instanceof ApiError && error.requestId && (
+        <p className="muted">Request reference: {error.requestId}</p>
+      )}
       {error instanceof ApiError && error.status === 401 ? (
         <Link
           to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`}

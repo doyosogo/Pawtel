@@ -3,6 +3,7 @@ export class ApiError extends Error {
     public status: number,
     public code: string,
     message: string,
+    public requestId?: string,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -25,6 +26,14 @@ async function send<T>(path: string, init: RequestInit = {}): Promise<T> {
       'We couldn’t reach PAWTEL. Please try again.',
     );
   }
+  const suppliedId = response.headers.get('X-Request-ID');
+  const requestId =
+    suppliedId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      suppliedId,
+    )
+      ? suppliedId
+      : undefined;
   if (response.status === 204) return undefined as T;
   let data;
   try {
@@ -34,6 +43,7 @@ async function send<T>(path: string, init: RequestInit = {}): Promise<T> {
       response.status,
       'invalid_response',
       'Something went wrong. Please try again.',
+      requestId,
     );
   }
   if (!response.ok) {
@@ -41,6 +51,7 @@ async function send<T>(path: string, init: RequestInit = {}): Promise<T> {
       response.status,
       data?.error?.code ?? 'request_failed',
       data?.error?.message ?? 'Your request could not be completed.',
+      requestId,
     );
   }
   return data as T;

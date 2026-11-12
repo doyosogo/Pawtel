@@ -1,131 +1,119 @@
-# Architecture
+# PAWTEL architecture
 
-```text
-React + TypeScript
-        ↓ (future domain API calls)
-FastAPI REST API
-        ↓
-SQLAlchemy 2
-        ↓
-PostgreSQL 18
+PAWTEL is an Australian dog/cat boarding marketplace implemented as a modular
+monolith: one React application, one FastAPI service, one PostgreSQL database.
+External providers have explicit adapters; they are not separate PAWTEL services.
+
+```mermaid
+flowchart LR
+    B[Browser / React + TypeScript] -->|HTTPS JSON; HttpOnly session cookie; CSRF on writes| A[FastAPI]
+    A -->|SQLAlchemy transactions / row locks| P[(PostgreSQL 18)]
+    A -->|Server API: Checkout Session| S[Stripe]
+    B -->|Stripe-controlled Checkout Elements| S
+    S -->|Signed raw-body webhook| A
+    A -->|Authenticated server upload / delete| C[Cloudinary]
+    C -->|Public image delivery| B
 ```
 
-## Implemented boundaries
+## Boundaries worth reviewing
 
-The independently runnable frontend uses Vite, Tailwind, React Router and a TanStack
-Query provider. Zustand is installed for future client state. src/app composes
-providers/routing, src/pages holds the temporary screen and src/test owns test setup.
-No marketplace or polished authentication UI has been built. Future features can live
-under src/features when real requirements exist.
+- React Router separates public marketplace, private Owner account and Host
+  workspace. TanStack Query owns server data; mutations invalidate collections and
+  details. Logout clears private queries and transient Checkout state. There is no
+  duplicated server-state Zustand store. Relative API paths support a single-origin
+  deployment; Vite proxies locally.
+- Session cookies hold high-entropy opaque credentials, HttpOnly and Secure in
+  production. PostgreSQL stores only credential hashes; Argon2id hashes passwords.
+  Exact Origin/custom-header/JSON checks and synchronizer CSRF protect writes.
+  Active/verified-user dependencies and scoped queries enforce authority server-side.
+- HostProfile is optional on the same User; one person can own Pets and host stays.
+  Private Pet/Listing/Booking DTOs allowlist safe fields. Foreign and missing private
+  resources share 404 semantics. The client cannot supply ownership or Booking price.
+- Thin FastAPI routers call focused services, each with explicit transaction
+  boundaries. SQLAlchemy models describe relational persistence; Pydantic schemas
+  define separate input/output contracts. Alembic owns schema changes, never
+  startup `create_all` or automatic migrations.
+- Public discovery exposes only published Listings, safe Host summaries and ordered
+  ready media. Availability is advisory. Price snapshots are integer AUD cents,
+  with authoritative fee rounding performed once on the server.
+- Stripe SDK calls and Cloudinary operations run outside long database locks.
+  Persisted attempt/image states make uncertain external outcomes observable and
+  recoverable. No raw card data touches PAWTEL: Stripe Elements owns those fields.
+- Application JSON logs record safe events and route templates with request IDs;
+  readiness checks PostgreSQL and exact schema revision, liveness only the process.
+  [Operations](operations.md) documents ingress limits, configuration and deployment.
 
-FastAPI app/main.py owns lifespan/CORS and preserves /health and exposes versioned /api/v1/auth and /api/v1/pets routes beyond framework
-documentation. app/core reads root .env and environment overrides. app/db owns named
-metadata, a lazy engine and per-operation sessions. Startup and health do not create
-an engine or require PostgreSQL. Sessions clean up resources but future services
-must explicitly own transaction boundaries.
+## One complete Booking journey
 
-app/models contains typed account, pet, listing and booking persistence models, with
-common UUID/timestamp mixins and native enum declarations. An explicit registry in
-app/models/__init__.py imports every model; Alembic imports it for complete metadata.
-TYPE_CHECKING imports and SQLAlchemy forward relationships avoid runtime model
-import cycles. These are database models, not Pydantic API schemas. Pet Profiles
-are exposed only through owner-scoped services. Listings now have private verified-host
-management APIs; Milestone 6 adds published-only public browsing and advisory
-availability. Milestone 7 adds pre-payment Booking workflows; payment handling
-remains deferred. Authentication uses explicit
-Pydantic input/output schemas, not general ORM serialization.
+```mermaid
+sequenceDiagram
+    participant O as Owner / React
+    participant A as FastAPI
+    participant DB as PostgreSQL
+    participant H as Host / React
+    participant S as Stripe
+    O->>A: Search published Listings / advisory availability
+    A->>DB: Read Listing/species/reserved occupancy
+    DB-->>O: Public DTO via API (no reservation)
+    O->>A: POST Booking: listing_id, dates, pet_ids
+    A->>DB: Transaction: verify scoped active Pets + species; quote; insert REQUESTED + Pets
+    A-->>O: Server-owned price snapshot / REQUESTED
+    H->>A: Explicit accept action
+    A->>DB: Transaction: lock Listing, then Booking; recheck eligibility + overlapping capacity
+    A->>DB: Set AWAITING_PAYMENT + deadline; commit reservation
+    A-->>H: Payment required
+    O->>A: Start authenticated/CSRF Checkout (Booking ID only)
+    A->>DB: Transaction: durable PaymentAttempt/idempotency key; commit
+    A->>S: Create/recover Checkout Session outside DB lock
+    A->>DB: Second transaction: match/attach outcome or reconciliation state
+    A-->>O: Transient client_secret for Checkout Elements
+    O->>S: Stripe-controlled form / browser confirmation
+    S->>A: Signed webhook with event ID
+    A->>DB: Transaction: deduplicate receipt; Listing-first locks; validate amount/currency/attempt/state
+    A->>DB: CONFIRMED if eligible; otherwise reconciliation; commit
+    O->>A: Return/status: bounded refetch
+    A-->>O: Actual persisted Booking state
+```
 
-Alembic owns schema creation and versioning. The initial migration is independent
-of mutable model definitions and owns native enum creation/removal. There is no
-startup create_all. Real PostgreSQL integration tests use these migrations, a
-separate protected test database and rollback/savepoint isolation. PostgreSQL is
-local through Homebrew, not Docker; the existing system cluster is left untouched.
-See [database design/setup](database.md) for the ERD and exact constraints.
+Owner cancellation, acceptance, payment/expiry changes follow the established
+Listing-first lock order. At READ COMMITTED the final capacity check happens under
+the shared Listing lock; concurrent acceptors cannot both reserve the last space.
+A request and a prior public availability response do not reserve capacity.
+AWAITING_PAYMENT and CONFIRMED occupy capacity under the existing rules; expired
+holds require explicit expiry transitions. Webhook success, not a redirect/query
+string or browser callback, is payment confirmation authority.
 
-## Planned service boundaries
+## Failure modes and evidence
 
-app/schemas now validates auth input/output; app/services/auth owns transactional
-registration/session/verification operations. app/security owns Argon2id, random
-credentials, request/CSRF checks and identity/active/verified dependencies. Safe
-application errors are defined in app/api/errors. Future business services must
-add ownership, booking transitions, pricing and capacity transaction rules. A user can optionally host
-through a shared-key HostProfile, without a second account model.
+| Failure | Implemented response / test boundary |
+| --- | --- |
+| Duplicate Stripe event | Durable unique webhook receipt, repeated delivery idempotent; backend signed-event tests |
+| Concurrent acceptance | Real separate PostgreSQL connections observe lock serialization, one winner for final space |
+| Checkout timeout/unknown creation result | Persisted attempt and deterministic provider idempotency key; retry/reconciliation tests with fake gateway |
+| Cancellation then late payment | State protection prevents unreserved confirmation; payment flagged for reconciliation, not automatic refund |
+| Cloudinary succeeds but DB association fails | Persisted PENDING/cleanup state plus compensating delete/retry; fake adapter and DB-failure tests |
+| Provider deletion fails | Local image hidden, cleanup remains visible to maintenance; no false distributed transaction guarantee |
+| Missing/foreign private resource | Owner-scoped lookup with indistinguishable safe 404; ownership regression tests |
+| Expired/revoked session | Hashed credential lookup rejects; UI clears private queries on logout/auth failure |
+| Database down/schema mismatch | Minimal readiness 503; production startup refusal; safe correlated exception event |
+| Oversized/chunked request | Actual-byte ASGI cap before downstream parsing; ingress bounds slow clients/concurrency |
 
-The [booking state machine](booking-state-machine.md) proposes locking the listing
-row before reservation-changing operations. This is a design for later code, not a
-capacity guarantee already implemented. See [ADR 0001](adr/0001-boarding-relational-model.md)
-for persistence trade-offs.
+The failure paths are not a promise that every production failure is solved.
+Reconciliation and media cleanup need an operator/scheduler; monitoring, restore
+exercises and real email delivery remain launch gaps. E2E deliberately stops at
+AWAITING_PAYMENT; Stripe/media correctness stays in deterministic provider tests,
+with sandbox/manual verification separately documented.
 
-## Future external integrations (not implemented)
+## Code navigation and decisions
 
-Stripe TEST mode, authenticated/idempotent webhooks, maps/geocoding, image/object
-storage and transactional email remain planned. No SDKs, payment logic, network
-callbacks or fake provider implementations were added. External operations must not
-run while holding a reservation transaction's database locks.
+`frontend/src/features` holds auth, Pets, Listings, Bookings, Host and Checkout;
+`backend/app/api/v1` defines contracts; `services` owns business transactions;
+`security` owns identity/CSRF; `operations` owns diagnostics; `payments` and
+`media` own their provider adapters. `backend/tests/integration` exercises real migrated PostgreSQL; Vitest
+exercises components/API helpers; `frontend/e2e` crosses real UI/API/DB boundaries.
 
-Only explicit local CORS origins are allowed. Credentials remain server-side;
-VITE_ variables are public and must never contain secrets. The local migration-owner
-roles are appropriate for this milestone, not a substitute for deployment hardening.
-
-## Authentication boundary
-
-Opaque sessions use PostgreSQL rather than JWT/Redis. HttpOnly cookies carry raw
-random credentials; database lookup uses SHA-256 digests. Argon2id stores passwords.
-Credentialed CORS is exact-origin, and auth POSTs combine JSON/custom-header/Origin
-checks with a session synchronizer nonce when authenticated. Registration and email
-verification use explicit atomic transactions. Email delivery remains deferred.
-See [ADR 0002](adr/0002-opaque-session-authentication.md) and
-[authentication/security](authentication.md) for actual semantics and limitations.
-
-## Private Pet resource boundary
-
-Milestone 4 reuses the existing Pet schema/index. app/schemas/pets validates and
-whitelists profile data; app/services/pets owns explicit transactions and owner-scoped
-SQL reads/updates; app/api/v1/pets supplies identity from the active-user dependency.
-The router reuses synchronizer CSRF for writes. Missing and foreign resources share
-404, and DELETE archives instead of deleting. /api/v1 responses are no-store;
-credentialed CORS additionally allows PATCH/DELETE for the same exact origins.
-No explicit row locks/versioning or generic repository framework was introduced.
-See [Pet ownership design](pet-profiles.md) and [ADR 0003](adr/0003-private-pet-ownership.md).
-
-## Host management boundary (Milestone 5)
-
-The existing verified-user dependency gates all private Host endpoints. Focused Host
-and Listing services derive the shared HostProfile key from authenticated identity,
-use owner-scoped SQL and own atomic Listing/species transactions. Explicit response
-schemas avoid relationship/security serialization. No migration or new infrastructure
-was necessary. See [Host/Listing contract](host-listings.md) and ADR 0004 for lifecycle,
-archive, validation and current last-writer-wins limitations.
-
-## Public discovery (Milestone 6)
-
-Separate unauthenticated GET routes expose published-only Listing DTOs, including
-safe display-name/bio Host summaries. Existing private route dependencies/middleware
-remain unchanged. A focused discovery service builds filtered, paginated SQL with
-joined relationships and a booking-boundary event sweep for advisory occupancy.
-No schema/index migration or reservation workflow was added. See
-[discovery contract](listing-discovery.md) for privacy, query and performance limits.
-
-## Transactional bookings (Milestone 7)
-
-Thin verified-user routes call a focused Booking service and exact pricing helper.
-Creation atomically persists requests/associations/quotes. Acceptance, decline and
-Owner cancellation coordinate on Listing then Booking row locks at READ COMMITTED.
-Per-night occupancy reuses the discovery event sweep, restricted to the Listing;
-public availability stays lock-free and advisory. Existing Listing capacity edits
-now reject reductions below reserved occupancy under their parent write lock.
-Separate-connection PostgreSQL tests observe actual blocking and prove one final-space
-winner. No new migration, infrastructure or payment integration was introduced.
-See [Booking design](bookings.md) and ADR 0006 for boundaries and limitations.
-
-## Stripe boundary (Milestone 8)
-
-Official SDK Checkout Sessions use elements/payment/AUD/card-only in sandbox mode.
-A local PaymentAttempt is committed before provider calls, then refreshed/recorded in
-a second Listing-first transaction. Deterministic request keys recover unknown outcomes;
-Event-ID receipts make signed raw-body webhooks durable/idempotent. Matching success
-is the confirmation authority, not browser returns. Cancellation cleanup runs after
-local commit; late money remains reconciliation, never unreserved confirmation.
-Synchronous webhooks do short SQL work without a queue. Explicit maintenance is not
-a scheduler. See [payment architecture](payments.md) and ADR 0007; payouts/refunds,
-Connect, live mode and checkout UI are not implemented.
+See the [ADR index](adr/README.md), [database ERD](database.md),
+[Booking state machine](booking-state-machine.md), [Booking contracts](bookings.md),
+[payment design](payments.md), [Host/media design](host-listings.md) and
+[deployment/E2E runbook](operations.md). No microservices, Kubernetes, Redis,
+reviews, messaging or payouts were introduced.

@@ -1,11 +1,14 @@
 # PAWTEL
 
-PAWTEL is a planned Airbnb-style pet boarding marketplace across Australia for owners
-of dogs/cats and accommodation hosts. One account will support optional Host mode.
+[![PAWTEL CI](https://github.com/doyosogo/Pawtel/actions/workflows/ci.yml/badge.svg)](https://github.com/doyosogo/Pawtel/actions/workflows/ci.yml)
+
+PAWTEL is an Australian pet boarding marketplace for dog/cat Owners and Hosts.
+One User account supports optional Host mode.
 This flagship junior software engineering portfolio project emphasises relational
 design, backend correctness, secure workflows and maintainable frontend engineering.
 
-**Status: Milestone 12 — Host onboarding, Listing management and Cloudinary media.** Implemented:
+**Status: Milestone 13 — a production-shaped portfolio MVP with CI, real headless
+E2E journeys and operational diagnostics.** Implemented:
 registration/session authentication, private Pet Profiles, optional Host mode and
 verified-host Listing configuration, plus published-only public discovery/detail and
 date-aware capacity snapshots. Owners can request stays with server-priced quotes;
@@ -14,16 +17,40 @@ transactionally. Owners can start Stripe sandbox Checkout; verified paid webhook
 confirm bookings and expiry releases holds. No live charges, payouts, external email
 delivery exists. The Owner sandbox Checkout Elements UI is documented below.
 
+## Engineering highlights and reviewer guide
+
+- Real PostgreSQL transactions and Listing-first row locks prevent double reservation.
+- Server-owned integer-cent price snapshots protect Booking totals from client changes.
+- Durable Checkout attempts and signed, deduplicated webhooks handle uncertain provider outcomes.
+- Private owner-scoped resources, opaque cookie sessions and CSRF enforce identity boundaries.
+- Cloudinary media metadata and cleanup states account for provider/database partial failures.
+- CI checks locked dependencies, real migrations, full suites and three real UI/API/DB journeys.
+- Minimal health/readiness, safe JSON logs, request IDs and production configuration refusal
+  make deployment behavior inspectable without exposing credentials.
+
+Start with the [architecture diagram and complete Booking flow](docs/architecture.md),
+[ADR index](docs/adr/README.md), and [CI/E2E/deployment runbook](docs/operations.md).
+The existing local setup and synthetic Owner/Host walkthrough below remain supported.
+Quick checks: backend `.venv/bin/python -m pytest`; frontend `npm ci`,
+`npm test -- --run`, `npm run build`; isolated headless journeys `npm run test:e2e`
+after the dedicated database/browser setup in the runbook. Never run E2E against
+local developer data. No provider secrets are required by automated tests.
+
+Current limitations: sandbox-only payments, no real email delivery, no production
+rollout or distributed rate-limit guarantee, no load/security audit, and no reviews,
+messaging, notifications, admin or payouts. A remote CI run can only happen after
+a human commits/pushes; adding the badge does not claim a GitHub result.
+
 ## Stack and layout
 
 - React 19, TypeScript 6, Vite 8, Tailwind CSS 4, React Router 8, TanStack Query 5, Zustand 5
 - Python 3.14, FastAPI, Pydantic v2 / Settings, SQLAlchemy 2, Alembic, Psycopg 3, Uvicorn
-- PostgreSQL 18 stable; Homebrew local setup, no Docker
-- Vitest / React Testing Library, ESLint / Prettier, Pytest / Ruff
+- PostgreSQL 18 stable; native Homebrew locally, disposable service containers in CI
+- Vitest / React Testing Library, headless Playwright, ESLint / Prettier, Pytest / Ruff
 
 ```text
 frontend/src/app/       # Routing/providers
-frontend/src/pages/     # Temporary screen and smoke test
+frontend/src/pages/     # Public marketplace and account pages
 backend/app/api/        # Health, versioned auth/pet/host routes and safe errors
 backend/app/core/       # Environment settings
 backend/app/db/         # Base metadata, lazy engine/session infrastructure
@@ -114,8 +141,9 @@ Environment variables override file values. BACKEND_CORS_ORIGINS is a JSON array
 configured as `["http://localhost:5173"]` for local development. The code defaults
 to no allowed origins, APP_ENV=production and Secure cookies. The local .env example
 explicitly chooses APP_ENV=development and SESSION_COOKIE_SECURE=false for HTTP.
-Production rejects insecure cookies and non-HTTPS origins. Startup/health work
-without database URLs; authentication and migrations need their configured database.
+Production additionally requires explicit allowed hosts, a dedicated configured
+database and schema readiness. Development startup/liveness work without PostgreSQL;
+readiness reports dependency/schema availability. See the operations runbook.
 
 ## Backend setup, migrate and run
 
@@ -140,8 +168,9 @@ a version-manager hint; it does not change system Python. Use `deactivate` to le
 the virtual environment.
 
 http://localhost:8000/health returns `{"status":"ok"}`; /docs shows the API docs.
-Health is liveness, not database readiness. Application startup never creates tables
-or opens a connection. Alembic creates the schema, not startup create_all.
+Health is liveness; `/ready` checks PostgreSQL and the Alembic head. Production
+startup checks readiness without mutating schema. Development startup does not
+require a database. Alembic creates the schema, never startup create_all.
 
 ## Backend verification and integration tests
 
@@ -262,20 +291,21 @@ and session `X-CSRF-Token` protections. DELETE sends `{}`. Never send owner_id o
 other immutable fields in request JSON. No schema/index change or migration was
 needed; Alembic remains at `868589ec460a`. See the [Pet API contract](docs/pet-profiles.md)
 for validation, sparse PATCH, archived metadata edits and last-writer-wins limitations.
-No Pet management frontend exists yet.
+The private Pet management frontend is available at `/account/pets`.
 
 ## Deliberate limitations
 
-No email delivery, public resend endpoint, password reset, OAuth, MFA, polished auth
-UI or live payment/payout workflows are implemented. Before public deployment,
-add rate limiting/credential-stuffing controls, email recovery/delivery, deployment
-hardening and session cleanup/retention. Current security tests reduce risk but do
-not establish timing immunity or complete production security.
+No email delivery, public resend endpoint, password reset, OAuth, MFA or live
+payment/payout workflows are implemented. Authentication UI is implemented. The
+[operational runbook](docs/operations.md) supplies configuration safeguards and an
+edge rate-limit contract; the ingress must actually enforce it. Credential-stuffing
+protection, recovery/delivery, monitoring and session retention remain launch work.
+Tests reduce risk but do not establish timing immunity or complete security.
 
 Domain constraints alone do not enforce per-night capacity, booking transitions,
 pet ownership or pricing formulas. Milestone 7 services enforce these for pre-payment
 requests/actions; sandbox payment/expiry transitions now follow the same protocol. Ranked/geospatial search, messaging, reviews, maps, notifications,
-images and admin functionality also remain deferred. There is no measured index
+and admin functionality remain deferred; Listing photos are implemented. There is no measured index
 performance claim or production runtime/migration-role separation yet.
 
 ## Host and Listing management (Milestone 5)
@@ -540,3 +570,23 @@ Manual walkthrough (you perform browser actions):
 No real cloud upload was performed by the automated test suite. Storage credentials,
 provider/CDN behavior and visual review require your manual verification. Existing
 seed Listings intentionally keep their deterministic SVGs without cloud assets.
+
+## CI, headless E2E and operations (Milestone 13)
+
+See [operations and deployment](docs/operations.md) for exact CI jobs, isolated
+PostgreSQL E2E setup, production environment validation, edge rate/body limits,
+privacy-safe JSON logs, request IDs, schema readiness and migration/run commands.
+The [architecture overview](docs/architecture.md) traces the whole Booking/payment
+transaction flow and important failure handling; the [ADR index](docs/adr/README.md)
+collects the eight existing decisions.
+
+Manual smoke check (you perform browser actions): start the backend/frontend using
+the local commands above, visit `http://localhost:5173`, log in as the synthetic
+Owner, request a stay, then log in as the synthetic Host and accept. Return as Owner
+and inspect AWAITING_PAYMENT; open Pay securely only when sandbox configured. Check
+Host Listing draft/edit/publish/archive and mobile width/keyboard navigation. Visit
+`http://localhost:8000/health` and `/ready`: expect 200 for both with a migrated DB;
+readiness becomes 503 if its dependency/schema is unavailable while liveness stays
+200. Do not stop shared databases merely to test this manually. Use `curl -i` to
+inspect request IDs/security headers and terminal JSON events. No automatic real
+Stripe/Cloudinary operations or GUI testing are part of CI.

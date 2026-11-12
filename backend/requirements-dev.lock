@@ -2,7 +2,7 @@
 # Verified on macOS ARM64 / Python 3.14.8; generated from the project environment:
 # python -m pip freeze --exclude pawtel-backend
 # Install this file, then install the editable project with --no-deps.
-# No hashes; cross-platform installation is not yet verified.
+# No hashes; the CI workflow checks Linux installation separately.
 alembic==1.20.0
 annotated-doc==0.0.5
 annotated-types==0.8.0
@@ -44,3 +44,8 @@ typing-inspection==0.4.4
 typing_extensions==4.16.0
 urllib3==2.8.0
 uvicorn==0.54.0
+
+# Media dependencies included since Milestone 12.
+cloudinary==1.46.3
+pillow==12.3.0
+six==1.17.0

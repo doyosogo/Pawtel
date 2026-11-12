@@ -274,3 +274,10 @@ CORS now permits PATCH/DELETE as well as GET/POST for exact configured origins.
 JSON/custom-header/Origin rules also apply to DELETE (send `{}`). All /api/v1
 responses, including private Pet reads, now use no-store headers. No auth policy,
 password/session format or frontend feature was changed. See [Pet Profiles](pet-profiles.md).
+
+## Operational boundary (Milestone 13)
+
+See [operations](operations.md) for production settings refusal, exact allowed hosts,
+JSON request correlation, body caps, schema readiness and the deployment-edge rate
+limit contract. Native direct Uvicorn has no rate limiter. These controls supplement
+the existing identity/CSRF/ownership rules; they do not replace them.

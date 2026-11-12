@@ -1,3 +1,5 @@
+import ipaddress
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -5,6 +7,7 @@ from urllib.parse import urlsplit
 
 from pydantic import Field, PostgresDsn, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -16,6 +19,8 @@ class Settings(BaseSettings):
     cloudinary_cloud_name: str | None = None
     cloudinary_api_key: SecretStr | None = None
     cloudinary_api_secret: SecretStr | None = None
+    allowed_hosts: list[str] = []
+    debug: bool = False
     app_name: str = "PAWTEL API"
     app_env: Literal["development", "test", "production"] = "production"
     stripe_secret_key: SecretStr | None = None
@@ -75,7 +80,114 @@ class Settings(BaseSettings):
                 raise ValueError("CORS requires exact HTTP(S) origins without paths.")
             if self.app_env == "production" and parsed.scheme != "https":
                 raise ValueError("Production CORS origins must use HTTPS.")
+        if self.app_env == "production":
+            self.validate_production()
         return self
+
+    def validate_production(self):
+        def local(host):
+            if (
+                not host
+                or host == "localhost"
+                or host.endswith((".localhost", ".local"))
+            ):
+                return True
+            try:
+                return (
+                    ipaddress.ip_address(host).is_loopback
+                    or ipaddress.ip_address(host).is_unspecified
+                )
+            except ValueError:
+                return False
+
+        def placeholder(value):
+            return any(
+                word in value.lower()
+                for word in ("replace", "changeme", "placeholder", "synthetic")
+            )
+
+        if (
+            self.debug
+            or not self.database_url
+            or not self.backend_cors_origins
+            or not self.allowed_hosts
+        ):
+            raise ValueError(
+                "Production requires database, origins/hosts and debug disabled."
+            )
+        url = make_url(str(self.database_url))
+        if (
+            url.drivername != "postgresql+psycopg"
+            or not url.database
+            or not url.username
+            or re.search(r"(^|_)(test|dev|e2e)($|_)", url.database or "", re.I)
+            or url.username == "postgres"
+        ):
+            raise ValueError(
+                "Production requires a non-test database and application role."
+            )
+        if not url.password or len(url.password) < 16 or placeholder(url.password):
+            raise ValueError(
+                "Production requires a non-placeholder database credential."
+            )
+        if self.test_database_url:
+            raise ValueError("Do not configure the test database in production.")
+        if any(
+            local(urlsplit(origin).hostname) for origin in self.backend_cors_origins
+        ):
+            raise ValueError("Production origins cannot be local development hosts.")
+        if any(
+            local(host) or not re.fullmatch(r"[A-Za-z0-9.-]+", host) or "*" in host
+            for host in self.allowed_hosts
+        ):
+            raise ValueError(
+                "Production allowed_hosts must be explicit non-local hostnames."
+            )
+        stripe = [
+            self.stripe_secret_key,
+            self.stripe_webhook_secret,
+            self.stripe_return_url,
+        ]
+        if any(stripe):
+            if not all(stripe):
+                raise ValueError(
+                    "Payments require API key, webhook secret and return URL."
+                )
+            if any(
+                len(secret.get_secret_value()) < 32
+                or placeholder(secret.get_secret_value())
+                for secret in stripe[:2]
+            ):
+                raise ValueError(
+                    "Configured payments require non-placeholder credentials."
+                )
+            if not self.stripe_webhook_secret.get_secret_value().startswith("whsec_"):
+                raise ValueError(
+                    "Configured payments require a webhook signing secret."
+                )
+        cloud = [
+            self.cloudinary_cloud_name,
+            self.cloudinary_api_key,
+            self.cloudinary_api_secret,
+        ]
+        if any(cloud):
+            if not all(cloud) or not re.fullmatch(
+                r"[A-Za-z0-9_-]+", self.cloudinary_cloud_name or ""
+            ):
+                raise ValueError(
+                    "Configured media requires complete Cloudinary settings."
+                )
+            if (
+                any(
+                    placeholder(secret.get_secret_value())
+                    or len(secret.get_secret_value()) < 10
+                    for secret in cloud[1:]
+                )
+                or len(self.cloudinary_api_secret.get_secret_value()) < 20
+            ):
+                raise ValueError(
+                    "Configured media requires non-placeholder credentials."
+                )
 
     @property
     def session_cookie_name(self) -> str:

@@ -86,3 +86,34 @@ describe('cookie API boundary', () => {
     await expect(get('/listings')).rejects.toHaveProperty('name', 'AbortError');
   });
 });
+
+it('keeps a safe backend request reference on errors for support', async () => {
+  const reference = 'ebcc924a-46a2-47d0-8e13-a9d732f0d515';
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: { code: 'internal_error' } }), {
+        status: 500,
+        headers: { 'X-Request-ID': reference },
+      }),
+    ),
+  );
+  await expect(get('/anything')).rejects.toMatchObject({
+    requestId: reference,
+  });
+});
+
+it('ignores untrusted request reference text', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(
+      new Response('{}', {
+        status: 500,
+        headers: { 'X-Request-ID': 'unsafe-reference' },
+      }),
+    ),
+  );
+  await expect(get('/anything')).rejects.toMatchObject({
+    requestId: undefined,
+  });
+});

@@ -9,9 +9,15 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { '/api': { target: 'http://127.0.0.1:8000', changeOrigin: false } },
+    proxy: {
+      '/api': {
+        target: process.env.PAWTEL_API_PROXY_TARGET ?? 'http://127.0.0.1:8000',
+        changeOrigin: false,
+      },
+    },
   },
   test: {
+    include: ['src/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     clearMocks: true,

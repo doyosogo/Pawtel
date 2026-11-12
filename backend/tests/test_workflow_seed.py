@@ -9,7 +9,15 @@ def test_workflow_refuses_production_before_connecting(monkeypatch):
         "app.scripts.seed_workflow.get_engine", lambda: pytest.fail("DB access")
     )
     with pytest.raises(ValueError, match="development"):
-        run(DemoSettings(_env_file=None, app_env="production"))
+        run(
+            DemoSettings(
+                _env_file=None,
+                app_env="production",
+                database_url="postgresql+psycopg://pawtel_app:unit-only-long-passphrase@db.example.com/pawtel",
+                backend_cors_origins=["https://app.example.com"],
+                allowed_hosts=["api.example.com"],
+            )
+        )
 
 
 @pytest.mark.parametrize("password", [None, SecretStr("short")])

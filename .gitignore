@@ -40,3 +40,9 @@ build/
 
 # Optional project-local Python runtime
 .python/
+
+# Private E2E fixtures/credentials, bundled browser and generated test artifacts
+.cache/
+frontend/e2e-results/
+frontend/playwright-report/
+frontend/playwright/.cache/

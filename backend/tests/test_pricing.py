@@ -32,12 +32,14 @@ def test_overflow_rejected():
 
 
 def test_payment_window_configuration():
-    assert Settings(_env_file=None).booking_payment_window_seconds == 1800
+    assert (
+        Settings(_env_file=None, app_env="test").booking_payment_window_seconds == 1800
+    )
     assert (
         Settings(
-            _env_file=None, booking_payment_window_seconds=600
+            _env_file=None, app_env="test", booking_payment_window_seconds=600
         ).booking_payment_window_seconds
         == 600
     )
     with pytest.raises(ValueError):
-        Settings(_env_file=None, booking_payment_window_seconds=0)
+        Settings(_env_file=None, app_env="test", booking_payment_window_seconds=0)

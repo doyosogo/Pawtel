@@ -6,8 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.errors import error_response
 from app.core.config import Settings
-
-logger = logging.getLogger(__name__)
+from app.operations.logging import log_event
 
 
 class AuthHTTPMiddleware(BaseHTTPMiddleware):
@@ -60,7 +59,11 @@ class AuthHTTPMiddleware(BaseHTTPMiddleware):
         except Exception as error:
             # No exception text/traceback/body/credentials. Operational telemetry can
             # safely count exception types without retaining sensitive payloads.
-            logger.error("Unhandled application error: %s", type(error).__name__)
+            log_event(
+                "unexpected_error",
+                level=logging.ERROR,
+                exception_type=type(error).__name__,
+            )
             response = error_response(
                 500, "internal_error", "The request could not be completed."
             )
