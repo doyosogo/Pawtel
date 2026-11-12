@@ -46,8 +46,11 @@ Cloudinary or email services. No provider/repository secrets are passed to jobs.
 
 Workflow permissions are `contents: read`, checkout does not retain credentials,
 and ordinary `pull_request` is used, never privileged `pull_request_target`.
-A local passing run does not establish that the workflow has run on GitHub; the
-badge becomes meaningful after the workflow is committed and pushed by a human.
+The verified remote baseline is
+[run 43312304584](https://github.com/doyosogo/Pawtel/actions/runs/43312304584)
+for `main` commit `a8faa4f` (checked 13 November 2026): backend, frontend and E2E
+all succeeded on GitHub-hosted Linux. Local checks alone would not prove that;
+future commits need their own remote result. See the [CI incident story](portfolio-case-study.md#cie2e-and-deployment-hardening).
 Action major versions and the Postgres patch are explicit; image/action digests
 are not pinned. Review trusted upstream updates rather than silently auto-upgrade.
 
@@ -85,10 +88,6 @@ PLAYWRIGHT_BROWSERS_PATH=../.cache/pw-browsers npm run e2e:install
 npm run test:e2e
 unset E2E_DATABASE_URL
 ```
-
-For this recovered workspace only, the generated E2E database credential is in the
-ignored mode-600 `.cache/e2e-db-url`; use `export E2E_DATABASE_URL="$(cat ../.cache/e2e-db-url)"`
-instead. Do not print/share that file. Fresh clones use the setup above.
 
 The runner refuses production, remote databases, wrong database/role, query URL
 overrides, superusers and non-18 servers before migrations. It applies real
@@ -236,7 +235,7 @@ collection before launch. Safe request events replace the lost access informatio
 
 ## Launch gaps
 
-No production rollout, remote GitHub Actions result, security audit, dependency
+No production rollout, security audit, dependency
 vulnerability clearance, performance/load test, uptime alerting, backup restore
 drill, distributed rate limiter or final restrictive CSP is claimed. A real launch
 also needs real email verification delivery, customer support/reconciliation
@@ -257,9 +256,10 @@ reserved for local development.
 
 ## Dependency review observed locally
 
-A clean `npm ci` and separate `npm audit --json` reported 11 advisories: 10 moderate
-through the ESLint/typescript-eslint → minimatch development chain, and one high
-through jsdom → undici 7.30.0. `npm ls undici minimatch --all` confirmed those paths.
+The 13 November 2026 `npm audit --json` recheck reported 11 affected development
+dependency entries: 10 moderate through the ESLint/typescript-eslint → minimatch
+chain, and one high through jsdom → undici 7.30.0. These are npm dependency findings,
+not a count of distinct CVEs. `npm ls undici minimatch --all` confirmed those paths.
 A separate `npm audit --omit=dev --json` reported zero production-dependency
 advisories at the time checked. That result is not a vulnerability-free guarantee.
 These test/lint tooling findings remain unresolved; review compatible upstream fixes

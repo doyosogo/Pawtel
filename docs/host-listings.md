@@ -184,7 +184,8 @@ not prevent profile/Listing editing, publication or deterministic demo imagery.
 Apply the new additive migration before starting the updated backend:
 
 ```zsh
-cd ~/Desktop/PAWTEL/backend
+# From repository root
+cd backend
 source .venv/bin/activate
 python -m alembic upgrade head
 uvicorn app.main:app --reload

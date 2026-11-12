@@ -56,8 +56,12 @@ was readable, but detailed logs returned 403; existing gh authentication was
 invalid and was not changed. Local CI-style reproduction identified two fixtures
 inheriting TEST_DATABASE_URL into production settings, plus a no-database readiness
 test inheriting DATABASE_URL. They now explicitly isolate those settings. Production refusal remains intact. This is an environment-isolation bug, not
-proof of a Linux-specific Python defect. You must push the reviewed fix and verify
-the NEW GitHub run yourself. No workflow was rerun/cancelled/modified remotely.
+proof of a Linux-specific Python defect. Those fixes were committed/pushed as
+`a8faa4f5a4b421001960b3c5bb58804f6b526d77`. On 13 November 2026,
+[run 43312304584](https://github.com/doyosogo/Pawtel/actions/runs/43312304584)
+was verified successful on GitHub-hosted Linux: frontend, backend and E2E all passed.
+No workflow was rerun/cancelled/modified by the agent. This records a remote CI
+baseline, not a deployed release; future commits need their own checks.
 
 Local checks and remote CI are separate evidence. Do not deploy until all three
 GitHub jobs pass for the exact commit you intend to release.

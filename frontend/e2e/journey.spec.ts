@@ -18,6 +18,12 @@ async function login(page: Page, host = false) {
 async function logout(page: Page) {
   await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('button', { name: 'Log out', exact: true }).click();
+  // Wait for anonymous navigation: private-route guards may redirect to login.
+  // The account-menu button is also visible while logout is still pending.
+  await expect(page).toHaveURL((url) => ['/', '/login'].includes(url.pathname));
+  await expect(
+    page.getByRole('button', { name: 'Account menu' }),
+  ).toHaveAttribute('aria-expanded', 'false');
   await expect(
     page.getByRole('button', { name: 'Account menu' }),
   ).toBeVisible();

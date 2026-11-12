@@ -1,55 +1,45 @@
 # PAWTEL product scope
 
-PAWTEL is an Australia-wide pet boarding marketplace for owners and hosts. Adelaide can be heavily represented in future synthetic demo data.
+PAWTEL is an Australian pet-boarding marketplace portfolio MVP for dog/cat Owners
+and Hosts. Boarding is the current service scope; synthetic accommodation is not
+a real service offering. [Architecture](architecture.md) describes implementation;
+ADRs retain the historical decisions rather than implying every model is a feature.
 
-## MVP product decisions (planned)
+## Implemented journey
 
-- Pet boarding only, supporting dogs and cats.
-- One user account type; existing users can enable Host mode.
-- Owners create pet profiles; hosts create accommodation listings.
-- Owners select a listing, dates and pets and send a booking request. Hosts review owner and pet information, then accept or decline. Accepted requests proceed through payment and confirmation.
-- Hosts configure base nightly prices and additional-pet fees. PAWTEL charges a 10% service fee; calculation details will be designed later.
-- Stripe TEST mode for the MVP payment integration.
-- Two-sided reviews only after completed stays.
-- Required email verification.
-- Realistic demo/seed hosts, users, pets, and listings.
+- Public published-Listing discovery/detail, suburb/location/species/date/Pet-count
+  filters and advisory availability. No fabricated distance, review or amenity data.
+- Email/password registration and opaque sessions, CSRF, active/verified account
+  rules and private owner-managed Pet Profiles. Real email delivery is absent.
+- Optional HostProfile on the same User; Listing draft/publish/archive, pricing,
+  capacity, accepted species, structured Australian location and Cloudinary media.
+- Verified Owner Booking requests with selected owned Pets and server-owned integer
+  AUD price snapshots, including the 10% PAWTEL service fee.
+- Host accept/decline and allowed Owner cancellation. Acceptance rechecks capacity
+  under Listing-first PostgreSQL locks; public availability does not reserve space.
+- Stripe sandbox Checkout Elements, durable attempts, signed/deduplicated webhook
+  confirmation, expiry/recovery and late-payment reconciliation. No live charges.
+- Frontend Owner/Host workflows, synthetic seed tooling, provider fakes, PostgreSQL
+  integration/concurrency tests, real headless E2E and verified GitHub CI.
+- Safe diagnostics, production configuration validation and a prepared same-origin
+  deployment path. No hosted release or public URL is currently verified.
 
-## Future expansion
+Australian states/postcodes and AUD are explicit assumptions. Textual location is
+not geocoding or validated suburb/postcode pairing. Passwordless fictional browse
+seeds and login-enabled workflow identities have different purposes; see the
+[local workflow](../README.md#try-the-full-workflow-locally).
 
-The architecture should accommodate daycare, house sitting, drop-in visits, and dog walking. These services are outside the boarding MVP.
+## Deliberately outside this MVP
 
-## Explicitly deferred functionality
+Reviews, messaging, notifications, admin, maps/geocoding, daycare, house sitting,
+drop-ins and dog walking. No Host payouts/Stripe Connect, saved cards, subscriptions
+or automatic refund product flow. Do not advertise these as implemented features.
 
-Milestone 2 added PostgreSQL/domain persistence. Milestone 3 adds password registration,
-opaque sessions, login/logout/self, CSRF and email-verification persistence/consumption.
-External email delivery, public resend, password reset, OAuth, the polished auth UI,
-payment workflows, automatic expiry/completion, confirmed cancellations/refunds,
-messaging, dashboards, ranked/geospatial search, maps, reviews and seed data remain deferred. Existing
-domain models do not imply working marketplace features. No admin feature exists.
+## Before real customers
 
-Milestone 4 implements private owner-managed Pet Profile APIs (create/list/get/PATCH/
-soft archive), including pre-verification setup for active users. No Pet frontend,
-medical/vaccination/image data, restore feature or host-review access was added.
-
-Milestone 5 adds optional HostProfile enablement/bio management and private Listing
-configuration, including accepted species and draft/published/archive lifecycle.
-Verified email gates all Host management. At that milestone public browsing and
-availability were deferred; Milestone 6 below adds them as read-only APIs. Host UI,
-images and geocoding remain deferred.
-
-Milestone 6 implements public PUBLISHED discovery/detail, textual filters, pagination
-and advisory per-night capacity. Public browsing is now available as an API only;
-ranking, geocoding, images and the search frontend remain deferred. That milestone
-did not implement booking creation/acceptance; Milestone 7 below adds them.
-
-Milestone 7 implements verified Owner requests with server-priced snapshots, private
-Owner/Host review, Host accept/decline and Owner pre-payment cancellation. Acceptance
-rechecks capacity under PostgreSQL Listing-row locking and ends at AWAITING_PAYMENT.
-Payments, expiry, confirmed cancellations/refunds, completion and booking UI remain
-deferred. Public availability remains advisory, not a reservation.
-
-Milestone 8 adds sandbox-only Checkout Sessions, durable payment attempts/webhook
-receipts, signed success confirmation, expiry/recovery and cancellation reconciliation.
-No live charges, Connect/Host payouts, transfers, saved cards, subscriptions, automatic
-refunds or checkout UI. Individual declined cards do not terminally fail open Checkout.
-Real sandbox credentials/verification are separate from deterministic offline tests.
+Manual provider provisioning and deployment verification; real email/recovery;
+privacy/legal/support/retention processes; scheduled maintenance/reconciliation;
+shared abuse controls; restore drills, security/load assessment and final CSP review.
+The portfolio deployment intentionally disables public registration and uses private
+synthetic demo access. Normal local registration remains functional, with verification
+requirements unchanged. This is production-shaped, not production-ready.

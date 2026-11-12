@@ -1,591 +1,207 @@
 # PAWTEL
 
-[![PAWTEL CI](https://github.com/doyosogo/Pawtel/actions/workflows/ci.yml/badge.svg)](https://github.com/doyosogo/Pawtel/actions/workflows/ci.yml)
+[![PAWTEL CI](https://github.com/doyosogo/Pawtel/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/doyosogo/Pawtel/actions/workflows/ci.yml)
 
-PAWTEL is an Australian pet boarding marketplace for dog/cat Owners and Hosts.
-One User account supports optional Host mode.
-This flagship junior software engineering portfolio project emphasises relational
-design, backend correctness, secure workflows and maintainable frontend engineering.
+An Australian **pet-boarding marketplace** for dog/cat Owners and Hosts: discover a
+stay, request a Booking, accept it as Host and complete Stripe **test** checkout.
+A production-shaped full-stack portfolio MVP built with **React, TypeScript,
+FastAPI and PostgreSQL**. Boarding is the current service scope; this is not a
+production-ready service or a real accommodation offer.
 
-**Status: Milestone 14 — deployment preparation for a production-shaped portfolio MVP.** Implemented:
-registration/session authentication, private Pet Profiles, optional Host mode and
-verified-host Listing configuration, plus published-only public discovery/detail and
-date-aware capacity snapshots. Owners can request stays with server-priced quotes;
-Hosts accept/decline, and Owners cancel before payment. Acceptance reserves capacity
-transactionally. Owners can start Stripe sandbox Checkout; verified paid webhooks
-confirm bookings and expiry releases holds. No live charges, payouts, external email
-delivery exists. The Owner sandbox Checkout Elements UI is documented below.
+**Verified:** 519 backend tests · 141 frontend tests · 3 real headless E2E tests.
+GitHub-hosted [run 43312304584](https://github.com/doyosogo/Pawtel/actions/runs/43312304584)
+is fully green for `main` commit `a8faa4f` (backend, frontend and E2E).
 
 ## Live demo
 
-**Not deployed yet — public URL pending manual account setup and verification.**
-The intended deployment is a synthetic portfolio demonstration, not a real boarding
-service. Demo sign-in credentials are shared privately by the author, never embedded
-in source. See the [manual Render deployment guide](docs/deployment.md).
+**Not deployed.** Deployment configuration exists; provider provisioning, secrets,
+release and public smoke checks remain manual. No live URL is claimed.
+See the [deployment guide](docs/deployment.md) and [final handoff](docs/deployment-checklist.md).
+A future public portfolio demo will use synthetic data and privately shared access,
+with registration disabled. No reusable password belongs in this repository.
 
-## Reviewer guide
+## Engineering highlights
 
-React/TypeScript → FastAPI → PostgreSQL, with Stripe sandbox webhooks and
-Cloudinary CDN media. Key engineering work: concurrency-safe reservation locks,
-server-owned price snapshots, webhook idempotency, owner-scoped resources,
-provider failure reconciliation and secure cookie/CSRF boundaries.
+- Prevent foreign-resource access with session-derived identity and owner-scoped
+  Pet, Listing and Booking queries; protect cookie-authenticated writes with CSRF.
+- Serialize Host acceptance with PostgreSQL Listing-first row locks, then recheck
+  overlapping Pet capacity before reserving the final space.
+- Persist server-owned AUD price snapshots instead of trusting client totals.
+- Confirm payments through signed, deduplicated webhooks; reconcile uncertain
+  Checkout outcomes and late payment after cancellation without resurrecting bookings.
+- Track Cloudinary upload/delete partial failures with durable media states and
+  cleanup instead of pretending the provider and PostgreSQL share a transaction.
+- Verify real React → FastAPI → PostgreSQL journeys in isolated CI; diagnose
+  failures with safe JSON logs, request IDs and separate health/readiness checks.
 
-- Verified Milestone 14: **519 backend / 141 frontend / 3 real headless E2E tests**.
-- [Architecture and transaction flow](docs/architecture.md) · [ADR index](docs/adr/README.md)
-- [Local/CI operations](docs/operations.md) · [Deployment, costs and launch checklist](docs/deployment.md)
+[Architecture and Booking data flow](docs/architecture.md) ·
+[Portfolio case study](docs/portfolio-case-study.md) · [Documentation index](docs/README.md)
 
-The first GitHub run exposed CI environment leakage into production-shaped fixtures
-and a no-database readiness test. Milestone 14 isolates those settings; a new remote run requires your
-reviewed commit/push. Do not treat the badge as green until that run passes.
-Current boundaries: sandbox-only payments, synthetic invited users, no real email,
-reviews, messaging, notifications, admin or payouts. No production-ready claim.
+## Stack
 
-## Stack and layout
+React 19, TypeScript 6, Vite 8, Tailwind 4, React Router and TanStack Query;
+Python 3.14, FastAPI, SQLAlchemy, Psycopg and Alembic; PostgreSQL 18;
+Stripe Checkout Elements and Cloudinary; Pytest, Vitest/Testing Library,
+headless Playwright and GitHub Actions. Server state stays in TanStack Query;
+Zustand is installed but no artificial duplicated API store was added.
 
-- React 19, TypeScript 6, Vite 8, Tailwind CSS 4, React Router 8, TanStack Query 5, Zustand 5
-- Python 3.14, FastAPI, Pydantic v2 / Settings, SQLAlchemy 2, Alembic, Psycopg 3, Uvicorn
-- PostgreSQL 18 stable; native Homebrew locally, disposable service containers in CI
-- Vitest / React Testing Library, headless Playwright, ESLint / Prettier, Pytest / Ruff
+## Run locally from a clean clone
 
-```text
-frontend/src/app/       # Routing/providers
-frontend/src/pages/     # Public marketplace and account pages
-backend/app/api/        # Health, versioned auth/pet/host routes and safe errors
-backend/app/core/       # Environment settings
-backend/app/db/         # Base metadata, lazy engine/session infrastructure
-backend/app/models/     # Domain and authentication persistence
-backend/app/schemas/    # Explicit auth, pet and host input/output contracts
-backend/app/services/   # Focused transactional auth/pet/host operations
-backend/app/security/   # Credentials, CSRF and permission dependencies
-backend/alembic/        # Migration environment and versioned schema
-backend/tests/          # Health/safety unit tests and PostgreSQL integration tests
-backend/.venv/          # Ignored local Python environment
-docs/                  # Scope, architecture, database ERD, state design, ADR
-.env.example            # Safe placeholders; local .env is ignored
-```
+Prerequisites: Python **3.14**, Node **24** (or supported 22.22+), and PostgreSQL **18**.
+Use the [database setup](docs/database.md#reproduce-the-isolated-setup-on-macos) to
+create separate non-superuser `pawtel_dev` and `pawtel_test` roles/databases.
+The documented macOS cluster uses loopback port **5433**; adapt connection URLs to
+your own isolated PostgreSQL 18 setup. Do not overwrite unrelated clusters/data.
+Linux CI uses disposable PostgreSQL containers; Docker is not required locally.
 
-See [product scope](docs/product-scope.md), [architecture](docs/architecture.md),
-[database design and macOS setup](docs/database.md), [booking state machine](docs/booking-state-machine.md),
-[ADR 0001](docs/adr/0001-boarding-relational-model.md) and [engineering principles](docs/engineering-principles.md).
-See [authentication/security](docs/authentication.md), [ADR 0002](docs/adr/0002-opaque-session-authentication.md)
-and [authentication interview notes](docs/authentication-interview.md) for this milestone.
-See [Pet Profiles and ownership](docs/pet-profiles.md) and
-[ADR 0003](docs/adr/0003-private-pet-ownership.md) for Milestone 4.
+From repository root, on a fresh clone only:
 
-## Prerequisites
-
-- macOS with Homebrew for the documented local database setup.
-- Node 24 LTS recommended (verified 24.13.1), or supported Node 22.22+; npm 11.8.0 verified.
-- Python 3.14 with pip/venv (verified 3.14.8). The requirement excludes unverified Python 3.15.
-- PostgreSQL 18 stable (verified Homebrew 18.6); do not use PostgreSQL 19 RC.
-
-`frontend/package-lock.json` and `backend/requirements-dev.lock` are intended for
-version control. The latter is a pinned pip snapshot of runtime + development
-packages, generated on macOS ARM64/Python 3.14.8 with
-`python -m pip freeze --exclude pawtel-backend`. It excludes the editable project
-and local paths, has no hashes and is not a universal cross-platform resolver lock.
-Update dependencies deliberately in a clean environment and rerun checks before
-regenerating it. Milestone 3 adds argon2-cffi and email-validator plus their required
-transitive packages; earlier pins are unchanged.
-TypeScript 6 satisfies the current typescript-eslint support range; jsdom 29 supports
-the verified Node runtime. Zustand is installed without an artificial store.
-
-## PostgreSQL setup on macOS
-
-Inspect installed servers first. This Mac already has PostgreSQL 18.4 under
-`/Library/PostgreSQL/18` on port 5432, which remains untouched. PAWTEL uses a separate
-Homebrew PostgreSQL 18.6 cluster on **127.0.0.1:5433**, with a separate socket directory.
-Do not overwrite unrelated clusters or assume port 5432 is free.
-
-```zsh
-brew install postgresql@18
-```
-
-Before starting a fresh Homebrew cluster, configure its port, listener, socket and
-authentication using the exact [local setup instructions](docs/database.md#reproduce-the-isolated-setup-on-macos).
-Those instructions also create separate non-superuser roles/databases `pawtel_dev`
-and `pawtel_test`, prompt securely for different passwords, revoke PUBLIC database
-access and configure UTC role timezones. They are first-time creation instructions;
-do not rerun them blindly over existing roles/data.
-
-Then manage only the Homebrew service:
-
-```zsh
-brew services start postgresql@18
-brew services list
-"$(brew --prefix postgresql@18)/bin/pg_isready" -h 127.0.0.1 -p 5433
-brew services stop postgresql@18
-```
-
-Start it again before migration/integration tests. `brew services restart postgresql@18`
-restarts it. This does not manage the separate /Library installation.
-
-## Environment
-
-On a fresh checkout, from the root:
-
-```zsh
+```bash
 cp .env.example .env
 chmod 600 .env
-```
-
-**Preserve an existing .env**; this workspace already has generated local credentials.
-Replace example passwords with the actual respective role passwords. URI-encode
-special characters. DATABASE_URL points to pawtel_dev; TEST_DATABASE_URL points to
-pawtel_test. Both target 127.0.0.1:5433 on this Mac. Never put these values in Git or
-frontend VITE_ variables, which are public.
-
-Pydantic Settings reads root .env regardless of the backend working directory.
-Environment variables override file values. BACKEND_CORS_ORIGINS is a JSON array,
-configured as `["http://localhost:5173"]` for local development. The code defaults
-to no allowed origins, APP_ENV=production and Secure cookies. The local .env example
-explicitly chooses APP_ENV=development and SESSION_COOKIE_SECURE=false for HTTP.
-Production additionally requires explicit allowed hosts, a dedicated configured
-database and schema readiness. Development startup/liveness work without PostgreSQL;
-readiness reports dependency/schema availability. See the operations runbook.
-
-## Backend setup, migrate and run
-
-From the root:
-
-```zsh
 cd backend
 python3.14 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-dev.lock
 python -m pip install --no-deps -e .
+```
+
+Edit the ignored root `.env`: replace database password placeholders with your own
+URI-encoded credentials, keep `APP_ENV=development`, `SESSION_COOKIE_SECURE=false`,
+`SERVE_FRONTEND=false` and `PORTFOLIO_DEMO=false` for local Vite development.
+`DATABASE_URL` targets `pawtel_dev`; `TEST_DATABASE_URL` targets `pawtel_test`.
+Do not overwrite an existing `.env`, commit it or expose either URL through VITE_.
+
+Backend terminal, from repository root:
+
+```bash
+cd backend
+source .venv/bin/activate
 python -m alembic upgrade head
-python -m alembic current
-python -m alembic history
-python -m alembic check
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn app.main:app --reload
 ```
 
-Install Python 3.14 first if missing. This workspace has an ignored project-local
-runtime under backend/.python and a ready .venv. `.python-version` contains `3.14` as
-a version-manager hint; it does not change system Python. Use `deactivate` to leave
-the virtual environment.
+Frontend terminal, from repository root:
 
-http://localhost:8000/health returns `{"status":"ok"}`; /docs shows the API docs.
-Health is liveness; `/ready` checks PostgreSQL and the Alembic head. Production
-startup checks readiness without mutating schema. Development startup does not
-require a database. Alembic creates the schema, never startup create_all.
-
-## Backend verification and integration tests
-
-From backend with .venv active and both databases configured:
-
-```zsh
-python -m ruff check .
-python -m ruff format --check .
-python -m pytest
-python -m pytest -m integration
-python -m pip check
-python -c 'from app.main import app; print(app.title)'
-python -m compileall -q app
-python -m alembic check
-```
-
-Default pytest includes real PostgreSQL tests. They guard the exact local test
-name/role, reject development targets and unsafe URL options, verify PostgreSQL 18,
-apply real migrations and roll model changes back after every test. The guarded
-migration test downgrades/upgrades **only the empty test database** and checks enum
-cleanup. Do not store valuable data in pawtel_test or run parallel test workers
-against it. See [test isolation/safety](docs/database.md#integration-testing-and-safety).
-
-For database-independent health and safety tests only:
-
-```zsh
-python -m pytest -m 'not integration'
-```
-
-Format Python with `python -m ruff format .`. Python has no separate application
-build step; import/compile checks verify it.
-
-## Frontend setup and verification
-
-From the root, in another terminal:
-
-```zsh
+```bash
 cd frontend
 npm ci
 npm run dev
 ```
 
-Open http://localhost:5173 for the marketplace. Start the backend on port 8000
-in another terminal first. Vite proxies `/api` to `http://127.0.0.1:8000`, preserving
-the browser origin for cookie sessions and CSRF checks. No frontend environment
-variables or credentials are needed. Use localhost:5173 (the configured allowed
-origin), rather than a LAN IP. Port 5173 is strict, so Vite will report a conflict
-instead of silently choosing another origin.
+Open `http://localhost:5173`. Backend diagnostics are `http://localhost:8000/health`
+and `/ready`; development API docs are `/docs`. Production does not use reload.
+Only public `VITE_` settings reach the frontend; ordinary API calls use the local
+Vite proxy and one relative `/api/v1` base.
 
-Routes include the homepage, `/stays`, `/stays/:listingId`, `/register`, `/login`,
-and `/account`; `/hosting` explains the current hosting status without management
-tools. Search uses the real discovery filters and server pagination. Availability
-checks do not reserve a stay. Registration does not send email in this demo, and
-verified email remains required by the backend for hosting and bookings.
+## Try the full workflow locally
 
-React Router handles routes; TanStack Query handles server/session state. API
-requests include cookies. Writes fetch the current session CSRF nonce and include
-`X-PAWTEL-Request: 1`; passwords and session credentials are never persisted in
-browser storage. Local SVG illustrations are visibly labelled demo imagery.
+PAWTEL uses **email-based login**, not an `admin/admin` account. Choose your own
+15–128 character passphrase in the ignored root `.env`:
 
-Optional fictional marketplace data, from the backend directory with its virtual
-environment active:
-
-```zsh
-python -m app.scripts.seed_demo
+```dotenv
+PAWTEL_DEMO_PASSWORD=<your-local-demo-password>
 ```
 
-This create-only command requires APP_ENV=development and the local `pawtel_dev`
-database/role, rejects URL options and superuser execution, uses deterministic IDs
-and a transaction advisory lock, and preserves existing rows and edits. It creates
-12 fictional published Listings and passwordless hosts under reserved `.test`
-email addresses. Reruns create zero Listings when all demo rows already exist.
-There is no reset operation and seeded hosts cannot log in. Never use it to load
-production data.
+That is a placeholder, not a usable password. After migrations, from repository root:
 
-```zsh
-npm run lint
-npm test -- --run
-npm run build
-npm run format:check
-```
-
-`npm run build` includes `tsc -b` type checking. `npm run preview` serves the build;
-`npm run format` formats source. The `/api` proxy is a development-server feature;
-production hosting must route `/api` to the backend and serve the SPA fallback.
-Run npm commands from `frontend`, which contains package.json.
-
-## Exercise authentication locally
-
-After applying migrations and starting Uvicorn, follow the
-[local HTTPX example](docs/authentication.md#local-exercise-no-credentials-printed).
-It prompts for a password without printing it, exercises registration/login/me/logout
-and keeps the cookie only in memory. All auth POSTs require JSON and
-`X-PAWTEL-Request: 1`. Authenticated POSTs also require the session nonce obtained
-through GET `/api/v1/auth/csrf`, supplied in `X-CSRF-Token`. Browser fetch calls must
-use `credentials: 'include'` and the configured exact frontend Origin.
-
-Registration returns 201 with a safe User and `verification_delivery: "not_configured"`.
-Login returns 200, sets the HttpOnly cookie and permits an unverified active user to
-hold a limited session. GET `/api/v1/auth/me` returns only safe self fields. Logout
-revokes only the current session and clears the cookie; repeated unauthenticated
-logout returns 204. POST `/api/v1/auth/verify-email` consumes a valid capability
-transactionally, but no email provider exposes/delivers that raw token yet. The
-integration tests exercise it through internal service helpers. Do not print or
-return secret tokens as a development shortcut.
-
-## Pet Profiles API
-
-All endpoints require a valid session and active account. Verified email is not
-required for private profile preparation; later marketplace actions will require it.
-POST `/api/v1/pets` creates an owned Pet; GET lists active own pets (optionally
-`?include_archived=true`); GET/PATCH/DELETE `/api/v1/pets/{pet_id}` operate only on
-that owner's Pet. DELETE archives rather than physically deleting. Foreign/missing
-valid UUIDs share 404 `pet_not_found`; malformed UUIDs return safe 422 validation errors.
-
-Writes require the existing JSON, `X-PAWTEL-Request: 1`, valid Origin when supplied,
-and session `X-CSRF-Token` protections. DELETE sends `{}`. Never send owner_id or
-other immutable fields in request JSON. No schema/index change or migration was
-needed; Alembic remains at `868589ec460a`. See the [Pet API contract](docs/pet-profiles.md)
-for validation, sparse PATCH, archived metadata edits and last-writer-wins limitations.
-The private Pet management frontend is available at `/account/pets`.
-
-## Deliberate limitations
-
-No email delivery, public resend endpoint, password reset, OAuth, MFA or live
-payment/payout workflows are implemented. Authentication UI is implemented. The
-[operational runbook](docs/operations.md) supplies configuration safeguards and an
-edge rate-limit contract; the ingress must actually enforce it. Credential-stuffing
-protection, recovery/delivery, monitoring and session retention remain launch work.
-Tests reduce risk but do not establish timing immunity or complete security.
-
-Domain constraints alone do not enforce per-night capacity, booking transitions,
-pet ownership or pricing formulas. Milestone 7 services enforce these for pre-payment
-requests/actions; sandbox payment/expiry transitions now follow the same protocol. Ranked/geospatial search, messaging, reviews, maps, notifications,
-and admin functionality remain deferred; Listing photos are implemented. There is no measured index
-performance claim or production runtime/migration-role separation yet.
-
-## Host and Listing management (Milestone 5)
-
-See [Host/Listing API contract](docs/host-listings.md) and
-[ADR 0004](docs/adr/0004-verified-private-host-management.md).
-All `/api/v1/host` reads and writes require an active, authenticated, email-verified
-User. POST `/profile` enables Host mode on that same account; GET/PATCH `/profile`
-read/edit its optional bio. POST/GET `/listings` and GET/PATCH/DELETE
-`/listings/{listing_id}` manage only that Host's Listings. Writes use the same JSON,
-request-marker, Origin and session-CSRF protections as Pet writes; DELETE sends `{}`.
-There is no real email provider yet; tests verify accounts using internal token
-issuance, without exposing tokens in production API responses.
-
-Creation always produces DRAFT. PATCH can select DRAFT/PUBLISHED; publication needs
-at least one accepted species. DELETE archives permanently through this API while
-preserving the row. Public visibility now exists only for PUBLISHED records through the separate Milestone 6 API. Prices are strict integer
-cents; capacity is configuration, not date availability. No migration/index/dependency
-change was needed; revision remains `868589ec460a`.
-
-## Public Listing discovery (Milestone 6)
-
-GET `/api/v1/listings` supports location, all-requested species, base-price and capacity
-filters with bounded limit/offset pagination. GET `/api/v1/listings/{id}` exposes only
-published details and safe Host display information. GET
-`/api/v1/listings/{id}/availability?check_in=2027-11-10&check_out=2027-11-12&pet_count=1`
-returns advisory remaining capacity. Dates in collection search require pet_count too.
-No authentication/CSRF is required for these read-only endpoints. Draft/archived/missing
-records share public 404. Availability is NOT a reservation; acceptance must recheck
-transactionally later. Milestone 7 adds the separate pre-payment Booking API; no frontend was added. See
-[discovery contract](docs/listing-discovery.md) and
-[ADR 0005](docs/adr/0005-advisory-public-availability.md).
-
-## Booking requests before payment (Milestone 7)
-
-Verified active Owners can POST `/api/v1/bookings` with listing_id, distinct owned
-pet_ids and check_in/check_out. The server validates published visibility, pets,
-species, UTC dates and advisory capacity, calculates integer-cent prices plus a
-10% HALF-UP fee, and stores immutable request snapshots. REQUESTED reserves nothing.
-Owner GET collection/detail and POST `/{id}/cancel` are private. Verified Hosts GET
-`/api/v1/host/bookings` and detail, then POST `/{id}/accept` or `/decline`.
-
-Acceptance locks Listing then Booking and rechecks per-night capacity before
-AWAITING_PAYMENT; simultaneous last-space acceptances cannot both succeed through
-this service. Cancellation releases holds under that same protocol. Configure
-BOOKING_PAYMENT_WINDOW_SECONDS (default 1800); overdue holds still reserve until an
-explicit future expiry transition. No Stripe/payment-success/expiry scheduler exists.
-All writes use existing CSRF/request protections. Creation is not idempotent: do not
-blindly retry unknown outcomes. See [Booking contracts](docs/bookings.md) and
-[ADR 0006](docs/adr/0006-listing-locks-and-booking-quotes.md). No migration was needed.
-
-## Stripe sandbox payments (Milestone 8)
-
-Apply migration b690ce0b281d and configure safe test-only Stripe settings in ignored
-.env; never commit keys/signing/client secrets. Verified Owners POST
-`/api/v1/bookings/{id}/checkout-session` with `{}` and normal CSRF protections.
-Checkout uses accepted price snapshots, elements/payment/AUD/card-only and fixed
-attempt idempotency keys. Only signed raw-byte Stripe webhooks confirm payment;
-a frontend redirect cannot. Paid cancellation races require reconciliation, not
-resurrection or automatic refunds. No Host payouts/Connect or polished checkout exists.
-
-See [payment contracts/recovery/CLI workflow](docs/payments.md),
-[ADR 0007](docs/adr/0007-checkout-and-webhook-authority.md) and
-[payment interview notes](docs/payments-interview.md). Explicit maintenance can be
-run from backend with `python -m app.payments.maintenance --limit 100`; it expires
-unstarted overdue holds or reconciles provider sessions without bypassing webhook
-confirmation. No automatic scheduler is installed. Normal tests use offline provider
-fakes and require PostgreSQL, not Stripe internet. Real sandbox smoke verification
-is a separate check and requires safely provisioned test credentials.
-
-## Booking website and local workflow demo (Milestone 10)
-
-The public marketplace keeps its existing search, Listing details and advisory
-availability checks. The account menu now links to My Pets, My Bookings and the
-Host workspace. Private routes redirect to login with a return path; the API still
-enforces ownership, active accounts, verified email, CSRF and Booking transitions.
-
-- `/account/pets`: active/archived Pet collection, create/edit and confirmed archive.
-  Only name, DOG/CAT species, optional breed and optional birth date are editable.
-- `/account/bookings` and `/:bookingId`: Owner history, saved server prices,
-  status/deadline, manual refresh and cancellation of REQUESTED/AWAITING_PAYMENT.
-- `/host`, `/host/bookings` and `/:bookingId`: existing Listing summaries, inbox,
-  safe Owner/Pet information and explicit accept/decline actions. Non-host accounts
-  receive onboarding. Milestone 12 adds Host setup, Listing editors and photos.
-
-Request a Booking from Listing detail using the dates above the Pet selector.
-Public availability uses its entered pet count; the real Booking uses the selected
-Pet IDs, whose count may differ. Ineligible species are disabled. The server
-revalidates active Pet ownership/species, dates, Listing state and capacity.
-Only `listing_id`, `pet_ids`, `check_in`, `check_out` are submitted; the response
-provides the authoritative subtotal, 10% fee and total. The website makes no price
-estimate or payment request. Unknown submission outcomes must be checked in My
-Bookings before retrying: the create endpoint has no idempotency-key contract.
-
-TanStack Query holds server state under user-scoped private keys. Pet mutations
-invalidate Pet collections (and archive refreshes Booking summaries). Booking
-mutations invalidate Owner/Host collections/details and public availability/search.
-Private caches are removed on logout or a detected expired session. There is no
-background polling: use Refresh booking/inbox to observe another user's action.
-
-### Optional login-enabled synthetic identities
-
-The original `python -m app.scripts.seed_demo` remains a create-only marketplace
-seed with 12 passwordless hosts. A separate opt-in command creates two additional
-synthetic verified accounts, two Pets and one additional published Listing:
-
-- Owner: `workflow.owner@pawtel.example.com` (Demo Milo, DOG; Demo Luna, CAT).
-- Host: `workflow.host@pawtel.example.com`.
-- Listing: **Demo workflow garden stay**, Norwood, SA; accepts dogs and cats.
-
-These addresses use reserved example.com and pass the actual auth email validator.
-No messages are delivered. For the password, choose your own local 15–128 character
-passphrase. Set `PAWTEL_DEMO_PASSWORD` in the existing ignored root `.env` locally;
-do not paste a password into tracked files, documentation, terminal history or a
-chat. Alternatively, enter it without echo for just this command:
-
-```zsh
-cd ~/Desktop/PAWTEL/backend
+```bash
+cd backend
 source .venv/bin/activate
-read -s 'PAWTEL_DEMO_PASSWORD?Local demo passphrase: '
-export PAWTEL_DEMO_PASSWORD
 python -m app.scripts.seed_workflow
-unset PAWTEL_DEMO_PASSWORD
 ```
 
-The command also reads the ignored `.env`. It refuses missing/invalid passwords,
-non-development settings, remote/unsafe targets, wrong database/role identity and
-superuser execution. It hashes through the normal Argon2id function, does not print
-the password, creates no Bookings, and changes only the fixed synthetic login
-identities. Rerunning is idempotent. Changing the configured password rotates
-synthetic hashes and revokes their existing sessions. Existing Listing/Pet edits,
-including archive state, are preserved; it is not a reset command. If you archive
-the seeded Pets, create new Pets via the UI for subsequent demos. Normal
-registration and verification requirements have no bypass or new endpoint.
+This guarded local command creates/updates:
 
-### Manual walkthrough
+| Role  | Login email                         |
+| ----- | ----------------------------------- |
+| Owner | `workflow.owner@pawtel.example.com` |
+| Host  | `workflow.host@pawtel.example.com`  |
 
-1. Configure the local password and run the workflow seed as above. Optionally run
-   the original marketplace seed as well if it has not already been run.
-2. Start the backend:
-   ```zsh
-   cd ~/Desktop/PAWTEL/backend
-   source .venv/bin/activate
-   uvicorn app.main:app --reload
-   ```
-3. Start the frontend in another terminal:
-   ```zsh
-   cd ~/Desktop/PAWTEL/frontend
-   npm run dev
-   ```
-4. Open http://localhost:5173 yourself. Log in as the synthetic Owner using your
-   locally chosen password. Inspect My Pets; create/edit a spare Pet and archive
-   it with confirmation; show archived Pets.
-5. Search Norwood, open **Demo workflow garden stay**, choose future dates,
-   optionally check availability, select Demo Milo and Demo Luna, and Request
-   booking. Inspect Waiting for host and the server price snapshot in My Bookings.
-6. Log out. Log in as the synthetic Host with the same locally configured password.
-   Open Host workspace → Booking inbox → the request. Accept it. Create a second
-   request if you also want to exercise decline; no decline reason is persisted.
-7. Log out and return as Owner. Open My Bookings/detail and Refresh booking if
-   needed. Confirm Payment required, total, deadline and temporarily reserved
-   capacity. Use Pay securely for the Milestone 11 sandbox checkout, after configuring
-   Stripe as described below.
-8. Exercise cancellation on a separate requested/awaiting-payment Booking, empty
-   inbox/filter states, keyboard navigation and mobile/tablet widths. Confirm no
-   horizontal overflow and that price rows and actions remain readable.
+Use the local passphrase you chose for either synthetic account. Passwords are
+hashed normally with **Argon2id**; no authentication bypass exists and no password
+is stored in Git. These identities are marked verified only because the operator
+explicitly creates fictional test users. Normal registration does not bypass email
+verification. Email delivery is not implemented; no verification email is promised.
 
-Email delivery remains unconfigured. Normal newly registered users can manage
-Pets, but require verified email for Bookings/hosting. Only the explicitly synthetic
-local seed identities are marked verified by tooling. Never expose verification
-tokens through the UI. Stripe frontend integration is documented below. Reviews,
-messaging remain out of scope. Milestone 12 adds Listing management and uploads.
+The Owner has a DOG and CAT; the Host owns **Demo workflow garden stay**. No Bookings
+are seeded. The command is idempotent and preserves existing edits/history; password
+rotation revokes synthetic sessions. It is not a destructive reset. Prefer fresh
+future dates and the workflow Host's Listing rather than passwordless browse-only seeds.
 
-## Stripe Checkout Elements website (Milestone 11)
+1. Log in as Owner and inspect **My Pets**.
+2. Search **Norwood**, open **Demo workflow garden stay**, select future check-in/
+   checkout and an accepted Pet, then **Request booking**.
+3. Inspect the server price snapshot and **Waiting for the Host to respond**.
+4. Log out, then log in as Host.
+5. Open **Host workspace → Booking inbox**, open the request and accept it.
+6. Log out and return as Owner; open **My Bookings** and observe **Payment required**
+   (`AWAITING_PAYMENT`), authoritative total and deadline.
+7. Optionally continue through **Pay securely** only after [Stripe sandbox setup](docs/payments.md).
+   A browser return alone does not confirm payment: the verified webhook must arrive.
 
-Owner AWAITING_PAYMENT detail now has **Pay securely**, leading to
-`/account/bookings/:bookingId/pay`. The page reads the real Owner Booking, displays
-its saved AUD prices/dates/Pets and loads Stripe's secure Elements form. It sends
-no client price/status values. Card details stay in Stripe-controlled Elements.
-Host pages have no checkout controls.
+**Which seed?** `seed_workflow` is development-only, guarded to local `pawtel_dev`.
+The optional `seed_demo` command supplies fictional browse-only Listings with
+passwordless Hosts. `seed_portfolio` is a separate operator-only command for a
+managed, dedicated synthetic deployment; do not use it for local setup or real users.
+See [deployed demo controls](docs/deployment.md#5-prepare-safe-synthetic-access).
+All demo identities, Pets and accommodations are fictional. Use synthetic inputs only.
 
-Set the sandbox's `VITE_STRIPE_PUBLISHABLE_KEY` privately in ignored root `.env`;
-Vite reads root configuration but exposes only default VITE_-prefixed variables.
-Keep backend STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET server-only. All keys
-must belong to the same sandbox; this project intentionally refuses live keys.
-Restart both servers after configuration changes. Empty `.env.example` placeholders
-contain no working credentials.
+## Tests and CI
 
-For your manual local test, configure the Stripe CLI yourself and forward:
+Backend, from repository root (PostgreSQL 18 and both database URLs required):
 
-```zsh
-stripe listen --events checkout.session.completed,checkout.session.expired --forward-to http://localhost:8000/api/v1/webhooks/stripe
+```bash
+cd backend
+source .venv/bin/activate
+python -m pytest
 ```
 
-Put that listener's signing secret privately in `.env` and restart the backend.
-Keep STRIPE_RETURN_URL as `http://localhost:5173/checkout/return`; Stripe confirmation
-uses a same-origin Booking-specific return path. Follow the Owner request/Host
-acceptance demo above, return as Owner, choose Pay securely, load the form and use
-only [Stripe's documented test scenarios](https://docs.stripe.com/testing).
+Frontend, from repository root:
 
-The return page starts with **Checking payment status** and reads PAWTEL. It shows
-success only when the backend returns CONFIRMED after a verified webhook. Pending
-status checks stop after a bounded interval; manual refresh remains available.
-Test a decline/retry, cancellation, logout, stale checkout URLs and mobile widths
-manually. No real sandbox payment was performed by automation.
+```bash
+cd frontend
+npm test -- --run
+```
 
-Checkout client secrets stay in component memory, outside Query/Mutation caches,
-URLs, logs and browser storage. Reloads use the protected backend endpoint again.
-The only backend compatibility change replaces the removed Endive creation input
-`payment_method_types` with `allowed_payment_method_types`, preserving card-only
-Elements Checkout. No Booking/webhook/security rules were changed. See
-[the complete payment walkthrough and lifecycle notes](docs/payments.md#owner-checkout-elements-website-milestone-11).
+E2E needs an additional guarded **pawtel_e2e** database AND role, plus a private
+`E2E_DATABASE_URL`. Follow the [isolated setup](docs/operations.md#isolated-headless-e2e),
+then from `frontend`:
 
-## Host onboarding, Listing management and photos (Milestone 12)
+```bash
+PLAYWRIGHT_BROWSERS_PATH=../.cache/pw-browsers npm run e2e:install
+npm run test:e2e
+```
 
-Hosts can now demonstrate the product with their own Listings: `/host` offers
-**Become a Host** for an eligible account without HostProfile, or a workspace with
-bio editing, Listing summary and Booking inbox. `/host/listings` lists owned
-Listings; create a draft at `/host/listings/new` and edit at
-`/host/listings/:listingId/edit`. Publish, move to draft and confirmed archive use
-the existing lifecycle. Archived Listings are read-only and Booking history stays.
+The runner uses real React → FastAPI → PostgreSQL, unique synthetic fixtures and
+scoped cleanup. It refuses developer/production databases. Only bundled headless
+Chromium is used; screenshot/trace/video recording is disabled. Normal CI does not
+contact Stripe, Cloudinary or an email service.
 
-AUD inputs convert decimal strings to exact integer cents. Configure DOG/CAT
-species, location, capacity and prices. Drafts can omit species; publication needs
-at least one. Capacity is simultaneous Pets; existing reservations constrain
-reductions. Hosts do not set PAWTEL's service fee. Location fields do not imply
-geocoding or geographic validation.
+GitHub Actions checks clean locked installs, PostgreSQL, migrations, Ruff and
+formatting, complete backend tests/dependency consistency, ESLint, Vitest,
+TypeScript/Vite build, Prettier and isolated E2E. PR CI receives no deployment/provider
+secrets and never deploys. [Runbook and complete commands](docs/operations.md).
+The [first CI failure and verified recovery](docs/portfolio-case-study.md#cie2e-and-deployment-hardening)
+show why explicit test configuration matters.
 
-Cloudinary provides Listing media through authenticated backend uploads. Add
-CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET privately to
-ignored root `.env`; never add VITE_ prefixes. Install updated backend dependencies
-and run `python -m alembic upgrade head` before starting the backend. No provider
-credentials are configured by the application or required for normal automated
-tests. Without them, drafts/Listing management and seeded placeholders still work.
+## Read further
 
-Save a draft before adding photos. Up to six JPEG/PNG/WebP images are supported,
-5 MiB each, 200–6000 pixels per side, maximum 24 megapixels, non-animated. The server
-checks decoded bytes and strips metadata. Upload/preview, reorder using explicit
-buttons, and remove in the editor. The first photo becomes the public card cover;
-detail shows the gallery. No photos or failed delivery uses labelled placeholders.
-External provider/DB failures retain tracked cleanup state; use
-`python -m app.media.cleanup` in the configured backend to retry cleanup. See the
-[Host/media setup and failure guide](docs/host-listings.md#host-website-and-listing-media-milestone-12)
-and [media ADR](docs/adr/0008-cloudinary-listing-media.md).
+[Authentication](docs/authentication.md) · [Pets](docs/pet-profiles.md) ·
+[Bookings](docs/bookings.md) · [Payments](docs/payments.md) ·
+[Host/Listings/media](docs/host-listings.md) · [Discovery](docs/listing-discovery.md) ·
+[Operations](docs/operations.md) · [Deployment](docs/deployment.md) · [ADRs](docs/adr/README.md)
 
-Manual walkthrough (you perform browser actions):
+[Résumé material](docs/resume-bullets.md) · [Interview guide](docs/interview-guide.md) ·
+[Manual screenshot plan](docs/images/README.md)
 
-1. Start backend and frontend as above; privately configure Cloudinary for actual
-   photo testing. Existing demo Host can log in, or use a verified account without
-   HostProfile and choose Become a Host. Normal unverified accounts still require
-   verification; email delivery is not implemented.
-2. Create a Listing and leave it Draft. Edit description/location, AUD prices,
-   simultaneous capacity and DOG/CAT selection. Confirm it is not public yet.
-3. Upload photos, inspect preview/alt text, change cover order and remove a spare
-   photo. Check visible errors for invalid format/oversize or missing provider setup.
-4. Publish, log out, search the chosen suburb, inspect the card cover and gallery.
-5. Return as Host; move to draft and republish if desired. Confirm archive, log out
-   and verify public search/detail no longer expose the Listing.
-6. Resize desktop/tablet/mobile and keyboard-test forms, confirmations and photo
-   move/remove controls. No automated browser or screenshot verification was used.
+## Current limits
 
-No real cloud upload was performed by the automated test suite. Storage credentials,
-provider/CDN behavior and visual review require your manual verification. Existing
-seed Listings intentionally keep their deterministic SVGs without cloud assets.
-
-## CI, headless E2E and operations (Milestone 13)
-
-See [operations and deployment](docs/operations.md) for exact CI jobs, isolated
-PostgreSQL E2E setup, production environment validation, edge rate/body limits,
-privacy-safe JSON logs, request IDs, schema readiness and migration/run commands.
-The [architecture overview](docs/architecture.md) traces the whole Booking/payment
-transaction flow and important failure handling; the [ADR index](docs/adr/README.md)
-collects the eight existing decisions.
-
-Manual smoke check (you perform browser actions): start the backend/frontend using
-the local commands above, visit `http://localhost:5173`, log in as the synthetic
-Owner, request a stay, then log in as the synthetic Host and accept. Return as Owner
-and inspect AWAITING_PAYMENT; open Pay securely only when sandbox configured. Check
-Host Listing draft/edit/publish/archive and mobile width/keyboard navigation. Visit
-`http://localhost:8000/health` and `/ready`: expect 200 for both with a migrated DB;
-readiness becomes 503 if its dependency/schema is unavailable while liveness stays
-200. Do not stop shared databases merely to test this manually. Use `curl -i` to
-inspect request IDs/security headers and terminal JSON events. No automatic real
-Stripe/Cloudinary operations or GUI testing are part of CI.
+Not production-ready: sandbox-only payments; no real email delivery/recovery,
+reviews, messaging, notifications, admin, payouts or maps. Hosting is prepared but
+not provisioned or publicly verified. Demo request budgets are single-process,
+not distributed abuse protection. Load/security assessment, restore drills,
+operational scheduling, final CSP/provider verification and customer/privacy/support
+processes remain launch work. Known development-tooling advisories are documented
+in [operations](docs/operations.md#dependency-review-observed-locally); no Python
+vulnerability-free claim is made.

@@ -274,12 +274,14 @@ matching the backend's sandbox-only policy. Empty placeholders remain in
    endpoint, configure snapshot events with the matching pinned API version.
 4. Start PAWTEL in two terminals:
    ```zsh
-   cd ~/Desktop/PAWTEL/backend
+   # From repository root
+   cd backend
    source .venv/bin/activate
    uvicorn app.main:app --reload
    ```
    ```zsh
-   cd ~/Desktop/PAWTEL/frontend
+   # From repository root in a separate terminal
+   cd frontend
    npm run dev
    ```
 5. Follow the README workflow seed instructions with your private demo password.
