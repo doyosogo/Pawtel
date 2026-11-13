@@ -80,6 +80,12 @@ npm run test:showcase
 
 For a project-local browser installation use
 `PLAYWRIGHT_BROWSERS_PATH=../.cache/pw-browsers npm run e2e:install`.
+CI sets `PLAYWRIGHT_BROWSERS_PATH` at frontend job scope so both
+`npx playwright install --with-deps chromium` and `npm run test:showcase` use the
+same project-local directory. An install into the default user cache cannot satisfy
+a test runner looking in `.cache/pw-browsers`; a pre-populated local cache previously
+masked this mismatch. Keep installation and execution aligned on fresh runners.
+
 The showcase suite starts/builds its own static preview and uses only bundled
 headless Chromium, no screenshots/video/traces. It asserts static same-origin GETs
 only, forbids fetch/XHR attempts, checks no storage/cookies, covers the persona

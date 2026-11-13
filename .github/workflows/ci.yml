@@ -74,6 +74,9 @@ jobs:
   frontend:
     name: frontend-quality-and-tests
     runs-on: ubuntu-24.04
+    # Browser installation and showcase execution must use the same project cache.
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/pw-browsers
     timeout-minutes: 10
     defaults:
       run:
