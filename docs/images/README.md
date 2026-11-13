@@ -1,23 +1,32 @@
-# Manual portfolio screenshots
+# PAWTEL portfolio screenshots
 
-No screenshots have been generated or supplied. This directory contains instructions
-only; do not add fake placeholders or broken image links to the main README.
+These five PNGs were captured on **13 November 2026** from the live
+[synthetic Vercel showcase](https://pawtel-ashen.vercel.app/) using only the
+project-managed **headless Playwright Chromium** browser. They are page renders,
+not desktop captures. No application source, CSS or rendered text was patched for
+the captures.
 
-After starting the local synthetic workflow (or verifying a deployed demo), capture
-these six states yourself. Use only synthetic data and redact browser/account details:
+| Image | Browser viewport | PNG dimensions | Synthetic state |
+| --- | --- | --- | --- |
+| [Homepage](pawtel-home.png) | 1440 × 1180 | 1440 × 1180 | Anonymous marketplace, search and first Listing cards |
+| [Listing detail](pawtel-listing.png) | 1440 × 1719 | 1440 × 1719 | Fictional Glenelg stay, gallery, Host, species and availability |
+| [Owner Booking](pawtel-owner-booking.png) | 1440 × 1000 | 1440 × 1000 | Demo Owner, Payment required sample and explicitly disabled Stripe preview |
+| [Host workspace](pawtel-host-dashboard.png) | 1440 × 1100 | 1440 × 1100 | Demo Host, three published Listings and a pending request |
+| [Listing editor](pawtel-listing-editor.png) | 1280 × 1000 | 1280 × 3142 | Full-page published Listing form, prices/capacity/species, lifecycle and disabled cloud upload |
 
-1. **Marketplace/search:** homepage or Norwood results with fictional Listing cards.
-2. **Listing detail:** title, gallery/illustration, species and selected future dates.
-3. **Owner Booking:** AWAITING_PAYMENT with authoritative AUD breakdown and deadline.
-4. **Host workspace:** Listing editor or inbox showing the same synthetic request.
-5. **Stripe sandbox:** clearly test-labelled Checkout Elements. Keep secret values,
-   URL query strings, developer tools, authentication data and card fields out of capture.
-6. **Mobile width:** search or Booking detail demonstrating readable layout and controls.
+Every image retains the synthetic-data notice. There are no real accounts,
+reservations, charges, credentials, developer tools, browser chrome, filesystem
+paths or personal information. Payment dates/prices are illustrative fixture data;
+these images do not prove backend persistence, concurrency or provider success.
+No Stripe card fields or real Cloudinary upload are shown.
 
-Optional substitute: export the existing Mermaid architecture diagram for a technical
-presentation. Do not imply a screenshot proves concurrency or webhook correctness.
+PNG recompression was kept only where smaller; decoded pixels and dimensions were
+checked unchanged. No lossy conversion, resizing, external optimization service,
+compositing or AI-generated screenshot content was used. The tall editor capture
+is collapsed in README so it does not dominate the product preview. Five desktop
+views cover the selected workflows; no extra mobile image was added for quantity.
 
-Use descriptive filenames such as `marketplace-desktop.png` only after real captures
-exist. Review files for personal data, tokens, reusable passwords, payment details,
-provider dashboards and localhost/user-path exposure. Include useful alt text when
-adding real images to documentation later. No browser automation is needed or requested.
+**Social-preview candidate:** `pawtel-home.png`. Review its fit manually in GitHub
+while retaining branding and the synthetic context. No repository settings were
+changed. For later refreshes, use the same public showcase and synthetic personas;
+never include passwords, tokens, provider dashboards, card details or personal data.

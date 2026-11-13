@@ -29,6 +29,39 @@ bookings or payments are created. Explore as Owner or Host without setup.
 passed all jobs, including the static showcase step. This is a portfolio MVP,
 not a production-ready service or a real accommodation offer.
 
+## Preview
+
+Captured from the live **synthetic frontend showcase**; no real bookings or payments.
+
+![PAWTEL synthetic marketplace homepage with branding, search controls and fictional Listing cards](docs/images/pawtel-home.png)
+
+<details>
+<summary>Browse and discover stays</summary>
+
+![Fictional Glenelg Listing with illustration gallery, Host summary, accepted species, nightly price and availability controls](docs/images/pawtel-listing.png)
+
+</details>
+
+### Owner and Host workflows
+
+<table>
+  <tr>
+    <th scope="col">Owner payment preview</th>
+    <th scope="col">Host workspace</th>
+  </tr>
+  <tr>
+    <td width="50%" valign="top"><a href="docs/images/pawtel-owner-booking.png"><img src="docs/images/pawtel-owner-booking.png" alt="Synthetic Owner Booking marked Payment required with dates, Milo the Dog, AUD price breakdown and Stripe-disabled explanation" width="100%"></a></td>
+    <td width="50%" valign="top"><a href="docs/images/pawtel-host-dashboard.png"><img src="docs/images/pawtel-host-dashboard.png" alt="Demo Host workspace with three published Listings, a pending Booking request and inbox navigation" width="100%"></a></td>
+  </tr>
+</table>
+
+<details>
+<summary>Listing editor and media controls</summary>
+
+![Demo Host editing a published Listing with species, capacity, AUD pricing, lifecycle actions and clearly disabled cloud upload](docs/images/pawtel-listing-editor.png)
+
+</details>
+
 ## Engineering highlights
 
 - Scope private Pets, Listings and Bookings to session identity; protect
