@@ -47,8 +47,8 @@ Cloudinary or email services. No provider/repository secrets are passed to jobs.
 Workflow permissions are `contents: read`, checkout does not retain credentials,
 and ordinary `pull_request` is used, never privileged `pull_request_target`.
 The verified remote baseline is
-[run 43312304584](https://github.com/doyosogo/Pawtel/actions/runs/43312304584)
-for `main` commit `a8faa4f` (checked 13 November 2026): backend, frontend and E2E
+[run 43317246922](https://github.com/doyosogo/Pawtel/actions/runs/43317246922)
+for `main` commit `da2255d` (checked 13 November 2026): backend, frontend and E2E
 all succeeded on GitHub-hosted Linux. Local checks alone would not prove that;
 future commits need their own remote result. See the [CI incident story](portfolio-case-study.md#cie2e-and-deployment-hardening).
 Action major versions and the Postgres patch are explicit; image/action digests

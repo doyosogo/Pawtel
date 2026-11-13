@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
     try:
         if app.state.settings.app_env == "production":
             if not await run_in_threadpool(database_ready, app.state.settings):
+                log_event("startup_not_ready", level=40)
                 raise RuntimeError("Schema not ready. Apply migrations before startup.")
         log_event("startup_ready")
         yield

@@ -26,8 +26,10 @@ production marketplace.
 
 - [Operations](operations.md): test commands, isolated E2E, CI and diagnostics.
 - [Deployment guide](deployment.md): selected provider path, pricing references, secrets and rollback.
+- [Environment inventory](deployment-environment.md): required, conditional and local-only values.
+- [Numbered deployment preflight](deployment-preflight.md): exact manual phases, costs and cleanup.
 - [Final deployment checklist](deployment-checklist.md): concise manual handoff, no automatic provisioning.
 
 The README is the primary location for current test counts. The verified remote
-baseline is [run 43312304584](https://github.com/doyosogo/Pawtel/actions/runs/43312304584)
-for `a8faa4f`; this is CI evidence, not proof of a public deployment.
+baseline is [run 43317246922](https://github.com/doyosogo/Pawtel/actions/runs/43317246922)
+for `da2255d`; this is CI evidence, not proof of a public deployment.

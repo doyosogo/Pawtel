@@ -10,6 +10,7 @@ EVENTS = {
     "database_error",
     "readiness_failed",
     "startup_ready",
+    "startup_not_ready",
     "shutdown_complete",
 }
 SERVER_MESSAGES = {

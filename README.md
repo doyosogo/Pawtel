@@ -8,14 +8,18 @@ A production-shaped full-stack portfolio MVP built with **React, TypeScript,
 FastAPI and PostgreSQL**. Boarding is the current service scope; this is not a
 production-ready service or a real accommodation offer.
 
-**Verified:** 519 backend tests · 141 frontend tests · 3 real headless E2E tests.
-GitHub-hosted [run 43312304584](https://github.com/doyosogo/Pawtel/actions/runs/43312304584)
-is fully green for `main` commit `a8faa4f` (backend, frontend and E2E).
+**Verified:** 520 backend tests · 141 frontend tests · 3 real headless E2E tests.
+GitHub-hosted [run 43317246922](https://github.com/doyosogo/Pawtel/actions/runs/43317246922)
+is fully green for `main` commit `da2255d` (backend, frontend and E2E).
 
 ## Live demo
 
-**Not deployed.** Deployment configuration exists; provider provisioning, secrets,
-release and public smoke checks remain manual. No live URL is claimed.
+<!-- LIVE_DEMO_STATUS: replace only the next paragraph after a real public URL is verified. -->
+
+**Not deployed — live demo URL pending manual deployment and verification.**
+
+Deployment configuration exists. Follow the manual provisioning, secret setup,
+release and public smoke checks before publishing this link.
 See the [deployment guide](docs/deployment.md) and [final handoff](docs/deployment-checklist.md).
 A future public portfolio demo will use synthetic data and privately shared access,
 with registration disabled. No reusable password belongs in this repository.

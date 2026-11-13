@@ -27,12 +27,12 @@ and atomic UI/API releases. Cloudinary still delivers photos from its CDN.
 
 ### Cost: review before creating anything
 
-Published Render compute rates are **US$7/month** for `0.5c-512mb` web compute and
-**US$6/month** for `0.1c-256mb` database compute. Budget **US$13/month compute**,
-plus any billed database storage at the published **US$0.30/GB-month**, bandwidth,
-build usage and tax. With 1GB configured, budget up to US$13.30 before those extras;
-confirm the currently advertised included 1GB treatment in your creation estimate.
-This is a transparent budget range, not an invoice or AUD conversion.
+Checked 13 November 2026: the official page lists Hobby workspace at $0 plus
+compute, **US$7/month** for `0.5c-512mb`, **US$6/month** for `0.1c-256mb`, and 1GB
+PostgreSQL SSD included. The selected 1GB baseline is **US$13/month before tax and
+metered extras**; additional storage is advertised at **US$0.30/GB-month**. Review
+the actual creation quote, usage/build/bandwidth limits and any optional workspace
+upgrades yourself. This is not a guaranteed invoice or AUD conversion.
 [Official pricing](https://render.com/pricing), [plan IDs](https://render.com/docs/compute-plans).
 
 A free Render web service sleeps after 15 idle minutes and can take about one
@@ -46,6 +46,10 @@ keep uploads private to invited synthetic Hosts. Stripe stays sandbox/test-only;
 no real payment-processing revenue/fees are assumed. Custom domains, paid media,
 more compute/storage or a higher workspace tier are optional, never provisioned
 here. Set spending alerts/limits available in your provider account yourself.
+
+See the definitive [environment inventory](deployment-environment.md) and
+[numbered manual deployment procedure](deployment-preflight.md), including cost,
+retirement and acceptance gates. They refine the checklist without provisioning anything.
 
 ## 1. Review CI and release code
 
@@ -62,6 +66,9 @@ proof of a Linux-specific Python defect. Those fixes were committed/pushed as
 was verified successful on GitHub-hosted Linux: frontend, backend and E2E all passed.
 No workflow was rerun/cancelled/modified by the agent. This records a remote CI
 baseline, not a deployed release; future commits need their own checks.
+
+Latest preflight baseline: [run 43317246922](https://github.com/doyosogo/Pawtel/actions/runs/43317246922)
+for `da2255d` is also fully green (checked 13 November 2026).
 
 Local checks and remote CI are separate evidence. Do not deploy until all three
 GitHub jobs pass for the exact commit you intend to release.
@@ -142,7 +149,8 @@ migration/runtime identity; separate DDL and runtime roles remain a real-launch 
 Render settings are checked into `render.yaml`:
 
 - Build: `bash deploy/render-build.sh` — installs the backend snapshot/editable
-  package and runs frontend `npm ci` plus TypeScript/Vite build.
+  package and runs frontend `npm ci --include=dev` plus TypeScript/Vite build, including build tools
+  even when NODE_ENV=production.
 - Pre-deploy: `cd backend && python -m tools.validate_deployment && python -m alembic upgrade head`.
 - Start: `bash deploy/render-start.sh` — bind `0.0.0.0:$PORT`, one worker, no reload,
   safe JSON logging, bounded concurrency and graceful shutdown.

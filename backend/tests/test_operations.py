@@ -196,6 +196,10 @@ def test_optional_providers_disabled():
 
 def test_startup_refuses_old_schema_and_disposes(monkeypatch):
     disposed = []
+    events = []
+    monkeypatch.setattr(
+        "app.main.log_event", lambda event, **kwargs: events.append(event)
+    )
     monkeypatch.setattr("app.main.database_ready", lambda settings: False)
     monkeypatch.setattr("app.main.dispose_engine", lambda: disposed.append(True))
     app = create_app(production())
@@ -207,6 +211,7 @@ def test_startup_refuses_old_schema_and_disposes(monkeypatch):
     with pytest.raises(RuntimeError, match="Schema not ready"):
         asyncio.run(run())
     assert disposed == [True]
+    assert events == ["startup_not_ready", "shutdown_complete"]
 
 
 @pytest.mark.parametrize(
@@ -345,3 +350,48 @@ def test_request_context_reaches_nested_events(monkeypatch):
     assert records
     assert {ident for ident, _ in records} == {response.headers["x-request-id"]}
     assert request_id.get() is None
+
+
+def test_production_unexpected_error_is_generic_correlated_and_redacted():
+    import io
+
+    from app.operations.logging import SafeJSONFormatter
+
+    app = create_app(production())
+    canary = "private-error-canary-password-cookie-client-secret-db-url"
+
+    @app.get("/api/v1/_test/unexpected")
+    def unexpected():
+        raise RuntimeError(canary)
+
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(SafeJSONFormatter())
+    logger = logging.getLogger("pawtel")
+    previous_level = logger.level
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    try:
+        response = request(
+            app,
+            "/api/v1/_test/unexpected?private=" + canary,
+            headers={"Host": "api.example.com", "Cookie": "private=" + canary},
+        )
+    finally:
+        logger.removeHandler(handler)
+        logger.setLevel(previous_level)
+    assert response.status_code == 500
+    assert response.json() == {
+        "error": {
+            "code": "internal_error",
+            "message": "The request could not be completed.",
+        }
+    }
+    reference = response.headers["x-request-id"]
+    records = [json.loads(line) for line in stream.getvalue().splitlines()]
+    assert records and all(record["request_id"] == reference for record in records)
+    assert any(record.get("exception_type") == "RuntimeError" for record in records)
+    assert any(record.get("route") == "/api/v1/_test/unexpected" for record in records)
+    assert canary not in response.text + stream.getvalue()
+    assert "traceback" not in response.text.lower()
+    assert "sql" not in response.text.lower()

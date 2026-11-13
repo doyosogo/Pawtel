@@ -20,8 +20,8 @@ production scale or measured performance improvements.
 - Persisted Stripe payment attempts and deduplicated signed webhook events; handled
   late payments after cancellation and cloud-media/database partial failures through
   explicit reconciliation and cleanup states.
-- Verified 519 backend, 141 frontend and 3 real React/FastAPI/PostgreSQL E2E tests,
-  including a fully successful GitHub-hosted Linux workflow and isolated test data.
+- Validated 520 backend, 141 frontend and 3 real React/FastAPI/PostgreSQL E2E tests
+  locally, alongside a verified GitHub-hosted Linux CI baseline and isolated test data.
 
 ## Project description
 
@@ -30,6 +30,6 @@ React/TypeScript, FastAPI and PostgreSQL. It demonstrates secure Owner/Host work
 transactional reservation/pricing, Stripe sandbox payments, Cloudinary media and
 verified CI; public deployment remains a manual handoff, not a claimed live service.
 
-[Remote baseline evidence](https://github.com/doyosogo/Pawtel/actions/runs/43312304584).
+[Remote baseline evidence](https://github.com/doyosogo/Pawtel/actions/runs/43317246922).
 Update any numbers you choose to copy if later suites change. Do not relabel the
 project as production-ready or claim live users without evidence.

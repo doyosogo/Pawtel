@@ -1,14 +1,17 @@
 # Final manual deployment handoff
 
 **No verified public URL exists.** Configuration and local verification do not equal
-a hosted release. Follow [deployment.md](deployment.md) for the full environment table,
+a hosted release. Follow [deployment.md](deployment.md) and the [exact environment inventory](deployment-environment.md) for the full variable table,
 current pricing references, provider steps and caveats. Nothing below is automated
 by PR CI and no account/resource/DNS operation should be delegated implicitly.
+
+Follow the [numbered phases A–H](deployment-preflight.md) when executing this checklist.
+That guide also covers suspension/deletion, backup implications and rollback limits.
 
 ## Before spending or deploying
 
 - [ ] Review and commit/push changes yourself. Confirm CI green for the EXACT release
-      SHA. The verified baseline is [a8faa4f / run 43312304584](https://github.com/doyosogo/Pawtel/actions/runs/43312304584).
+      SHA. The verified baseline is [da2255d / run 43317246922](https://github.com/doyosogo/Pawtel/actions/runs/43317246922).
 - [ ] Review Render's actual price estimate and provider permissions yourself. The
       selected paid app/database path is not a free Blueprint.
 - [ ] Keep automatic deployment Off. No provider write secrets belong in PR CI.
