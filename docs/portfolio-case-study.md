@@ -15,8 +15,10 @@ Booking requests and Stripe sandbox payment. Australian states/postcodes and AUD
 are explicit assumptions; suburb/postcode pairing is not geocoded validation.
 
 There are no invented reviews, amenities, distances or service categories. It does
-not provide real boarding or process live payments. Public hosting is prepared,
-not provisioned or verified.
+not provide real boarding or process live payments. The [public frontend showcase](frontend-showcase.md#hosted-verification) is live
+and verified. It removes infrastructure/login barriers for recruiters through
+explicitly synthetic data and simulated actions. Full-stack behavior is separately
+evidenced by tests/CI; the Render full-stack deployment is not live.
 
 ## Architecture
 

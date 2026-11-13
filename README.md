@@ -9,33 +9,31 @@ FastAPI and PostgreSQL**. Boarding is the current service scope; this is not a
 production-ready service or a real accommodation offer.
 
 **Verified:** 520 backend tests · 157 frontend tests · 3 full-stack E2E tests · 3 static showcase E2E tests.
-GitHub-hosted [run 43339550717](https://github.com/doyosogo/Pawtel/actions/runs/43339550717)
-is fully green for `main` commit `f1f87d8` (backend, frontend and E2E).
+GitHub-hosted [run 43354658127](https://github.com/doyosogo/Pawtel/actions/runs/43354658127)
+is fully green for `main` commit `674f482` (backend, frontend and E2E).
 
-## Frontend showcase
+## Live frontend showcase
 
-<!-- FRONTEND_SHOWCASE_URL: replace the next paragraph only after manual verification. -->
+[**Open PAWTEL →**](https://pawtel-ashen.vercel.app/)
 
-**Vercel showcase: not deployed — URL pending manual deployment.**
+Public synthetic frontend showcase for recruiter exploration. Actions are simulated
+and no real accounts, bookings or payments are created. Explore as Owner or Host
+without passwords or backend setup.
+[Showcase guide and hosted verification](docs/frontend-showcase.md).
 
-The static **Frontend Showcase — synthetic data** reuses PAWTEL's React UI with
-local simulated actions. Explore as Owner or Host without passwords, backend or
-provider setup. No real accounts, bookings or payments are created.
-[Run or deploy the showcase](docs/frontend-showcase.md).
+## Full-stack implementation
 
-## Full-stack implementation and hosted demo
+The repository contains the real React frontend, FastAPI backend and PostgreSQL
+persistence, with session/CSRF authentication, concurrency-safe Booking acceptance,
+Stripe Checkout/webhooks, Cloudinary media and CI/E2E coverage. The static showcase
+reuses that UI; it does not demonstrate or replace the backend behavior.
 
-This repository contains the real React → FastAPI → PostgreSQL implementation,
-including session/CSRF security, Booking concurrency, Stripe and Cloudinary.
-The showcase complements this implementation; it does not replace it.
+## Hosted full-stack demo
 
-<!-- LIVE_DEMO_STATUS: replace only the next paragraph after a real public URL is verified. -->
-
-**Full-stack Render demo: not deployed — provisioning and verification remain manual.**
-
-See the [deployment guide](docs/deployment.md) and [final handoff](docs/deployment-checklist.md).
-The full-stack synthetic demo uses privately shared access and server-disabled
-registration. No reusable password belongs in this repository.
+**The full-stack Render deployment is not live yet.** Provisioning and verification
+remain manual. See the [deployment guide](docs/deployment.md) and
+[full-stack handoff](docs/deployment-checklist.md). Invited synthetic access and
+server-disabled registration remain separate from showcase personas.
 
 ## Engineering highlights
 

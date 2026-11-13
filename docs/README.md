@@ -6,7 +6,7 @@ production marketplace.
 
 ## For recruiters and interviews
 
-- [Frontend showcase](frontend-showcase.md): static synthetic demo, persona exploration and manual Vercel setup.
+- [Frontend showcase](frontend-showcase.md): verified live synthetic demo, hosted checks, persona exploration and manual Vercel setup.
 
 - [Portfolio case study](portfolio-case-study.md): problem, decisions, trade-offs and evidence.
 - [Résumé bullets](resume-bullets.md): concise and technical options without invented business metrics.
@@ -33,5 +33,5 @@ production marketplace.
 - [Final deployment checklist](deployment-checklist.md): concise manual handoff, no automatic provisioning.
 
 The README is the primary location for current test counts. The verified remote
-baseline is [run 43339550717](https://github.com/doyosogo/Pawtel/actions/runs/43339550717)
-for `f1f87d8`; this is CI evidence, not proof of a public deployment.
+baseline is [run 43354658127](https://github.com/doyosogo/Pawtel/actions/runs/43354658127)
+for `674f482`; this is CI evidence, not proof of a public deployment.

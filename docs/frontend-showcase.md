@@ -5,6 +5,44 @@ creating an account or supplying credentials. **Frontend Showcase — synthetic 
 is a separate static build. It is not the hosted full-stack marketplace and does
 not demonstrate real authorization, concurrency, provider reliability or payments.
 
+## Hosted verification
+
+**Live frontend showcase:** https://pawtel-ashen.vercel.app/
+
+Verified **13 November 2026** using public HTTPS reads and project-managed headless
+Chromium against the actual production origin, with no local server, request
+mocking, provider login or screenshots. Current committed CI baseline `674f482`
+passed all jobs, including the showcase Playwright step in
+[run 43354658127](https://github.com/doyosogo/Pawtel/actions/runs/43354658127).
+
+- All seven specified routes returned the React shell and rendered after direct
+  navigation/reload: `/`, `/stays`, `/stays/showcase-stay-1`, `/account/pets`,
+  `/account/bookings`, `/host`, `/host/listings`. Anonymous private routes correctly
+  show persona access rather than real account content.
+- Four hosted scenarios passed: search/gallery; Owner request → Host acceptance →
+  Owner Payment required/disabled payment preview/reset; mobile Host/media access;
+  and direct routes/reloads. No uncaught page or HTTP errors were observed.
+- All 187 observed requests (25 unique method/URL pairs) were same-origin reads;
+  no API, localhost, Render, Stripe or Cloudinary traffic occurred. No fetch/XHR
+  interception or fake responses were used for this hosted run.
+- Three loaded JavaScript chunks and one stylesheet returned successfully. Six
+  local SVG illustration URLs loaded during browser exploration. All five configured
+  security headers matched exactly on tested HTML routes and scanned JS/CSS assets.
+  The four scanned assets also matched the fresh local showcase build byte-for-byte.
+- Payment preview contained no card inputs or iframes. Cloud upload remained disabled
+  with its explanation. Storage/cookies remained empty in the test contexts.
+- Explicit static checks found no PostgreSQL DSNs, seed-password variable, Stripe
+  secret/webhook-key patterns, Cloudinary secret variable, private machine paths,
+  configured localhost backend-port URLs or Render backend URLs. Two plain
+  `http://localhost` strings in React Router's dummy URL-base fallbacks were inspected
+  separately; neither is an observed backend request. This is a bounded string scan,
+  not a complete secret/security audit.
+
+This proves public static delivery and interface exploration at the verification
+point. It does not prove deployed backend auth, transactions, payments or media
+storage. Full-stack behavior remains separately evidenced by repository tests/CI;
+the Render full-stack demo is not live. Reverify after future releases.
+
 ## One UI, two data sources
 
 ```mermaid
@@ -95,8 +133,9 @@ React → FastAPI → isolated PostgreSQL suite with its dedicated database prer
 
 ## Deploy manually on Vercel
 
-No deployment or account setup has been performed. Review/commit/push the approved
-changes yourself first and verify their CI result.
+The showcase has been manually deployed and verified above. These instructions
+remain the reproducible operator path for future deployment/recreation. Review and
+push approved changes yourself, then verify their exact CI result before release.
 
 1. Sign into Vercel yourself. Use **Add New… → Project** (or the current import-project
    entry), then import your PAWTEL Git repository. Grant only permissions you accept.
@@ -121,8 +160,8 @@ changes yourself first and verify their CI result.
 9. Confirm the production URL is publicly accessible without Vercel authentication.
    Preview deployments may be protected by Vercel Authentication; do not give a
    recruiter an inaccessible preview link or weaken unrelated account security.
-10. Send the verified public URL back before updating the README showcase placeholder
-    and GitHub website field. No URL is fabricated in source.
+10. After verifying a new hostname/release, update the README live link and GitHub
+    website field yourself as appropriate. Never substitute an unverified URL.
 
 Git integration normally creates previews for non-production branches/PRs and
 production releases for the selected production branch. Review that behavior in
@@ -139,8 +178,8 @@ permits only local scripts/fonts/images (plus data/blob images), and disables
 native form submissions; React handles forms locally. Other headers prevent MIME
 sniffing/framing and disable camera/microphone/geolocation/payment permissions.
 These showcase-only headers must NOT be copied to the full-stack Stripe app.
-Local preview models headers/fallback, not the Vercel edge itself. Verify actual
-headers/deep links after manual deployment. Do not enable third-party analytics,
+Local preview alone cannot verify the Vercel edge. The hosted checks above verify
+actual headers/deep links for this release; repeat after subsequent deployments. Do not enable third-party analytics,
 Toolbar injection or provider widgets without reviewing the no-network contract/CSP.
 
 ## Boundaries and evidence
@@ -150,7 +189,7 @@ contracts and simulated state transitions. It does not prove secure sessions,
 transaction locks, webhook processing, durable media or managed deployment. Those
 remain implemented/tested in the full-stack repository and real E2E suite.
 Render full-stack deployment remains separate in [deployment.md](deployment.md).
-Public showcase URL: **not deployed; awaiting manual deployment and verification**.
+See [hosted verification](#hosted-verification) for the live status and its limits.
 
 Current official references reviewed for this milestone:
 [project import](https://vercel.com/docs/projects/managing-projects),
