@@ -2,67 +2,62 @@
 
 [![PAWTEL CI](https://github.com/doyosogo/Pawtel/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/doyosogo/Pawtel/actions/workflows/ci.yml)
 
-An Australian **pet-boarding marketplace** for dog/cat Owners and Hosts: discover a
-stay, request a Booking, accept it as Host and complete Stripe **test** checkout.
-A production-shaped full-stack portfolio MVP built with **React, TypeScript,
-FastAPI and PostgreSQL**. Boarding is the current service scope; this is not a
-production-ready service or a real accommodation offer.
+An Australian **pet-boarding marketplace** for dog/cat Owners and Hosts, built
+with **React, TypeScript, FastAPI and PostgreSQL** as a production-shaped
+portfolio MVP.
 
-**Verified:** 520 backend tests · 157 frontend tests · 3 full-stack E2E tests · 3 static showcase E2E tests.
-GitHub-hosted [run 43354658127](https://github.com/doyosogo/Pawtel/actions/runs/43354658127)
-is fully green for `main` commit `674f482` (backend, frontend and E2E).
+[**Live Frontend Showcase →**](https://pawtel-ashen.vercel.app/)
 
-## Live frontend showcase
+Synthetic recruiter-facing demo. Actions are simulated; no real accounts,
+bookings or payments are created. Explore as Owner or Host without setup.
+[Two-minute recruiter walkthrough](docs/recruiter-walkthrough.md).
 
-[**Open PAWTEL →**](https://pawtel-ashen.vercel.app/)
+## Project status
 
-Public synthetic frontend showcase for recruiter exploration. Actions are simulated
-and no real accounts, bookings or payments are created. Explore as Owner or Host
-without passwords or backend setup.
-[Showcase guide and hosted verification](docs/frontend-showcase.md).
+| Area                         | Status                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| Frontend showcase            | Live on Vercel; public delivery and simulated journey verified           |
+| Full-stack implementation    | Core boarding MVP implemented and tested in this repository              |
+| GitHub CI                    | Green for committed `31b9d08`; backend, frontend and E2E                 |
+| Full-stack public deployment | Render configuration prepared; **not live**                              |
+| Stripe                       | Sandbox/test Checkout and verified-webhook architecture                  |
+| Cloudinary                   | Media integration implemented; hosted provider acceptance remains manual |
 
-## Full-stack implementation
-
-The repository contains the real React frontend, FastAPI backend and PostgreSQL
-persistence, with session/CSRF authentication, concurrency-safe Booking acceptance,
-Stripe Checkout/webhooks, Cloudinary media and CI/E2E coverage. The static showcase
-reuses that UI; it does not demonstrate or replace the backend behavior.
-
-## Hosted full-stack demo
-
-**The full-stack Render deployment is not live yet.** Provisioning and verification
-remain manual. See the [deployment guide](docs/deployment.md) and
-[full-stack handoff](docs/deployment-checklist.md). Invited synthetic access and
-server-disabled registration remain separate from showcase personas.
+**Verified:** 520 backend tests · 157 frontend tests · 3 full-stack E2E tests ·
+3 static showcase E2E tests.
+[GitHub-hosted run 43371858294](https://github.com/doyosogo/Pawtel/actions/runs/43371858294)
+passed all jobs, including the static showcase step. This is a portfolio MVP,
+not a production-ready service or a real accommodation offer.
 
 ## Engineering highlights
 
-- Prevent foreign-resource access with session-derived identity and owner-scoped
-  Pet, Listing and Booking queries; protect cookie-authenticated writes with CSRF.
-- Serialize Host acceptance with PostgreSQL Listing-first row locks, then recheck
-  overlapping Pet capacity before reserving the final space.
+- Scope private Pets, Listings and Bookings to session identity; protect
+  cookie-authenticated writes with CSRF.
+- Serialize competing Host acceptances using PostgreSQL row locks and a
+  transactional capacity recheck.
 - Persist server-owned AUD price snapshots instead of trusting client totals.
-- Confirm payments through signed, deduplicated webhooks; reconcile uncertain
-  Checkout outcomes and late payment after cancellation without resurrecting bookings.
-- Track Cloudinary upload/delete partial failures with durable media states and
-  cleanup instead of pretending the provider and PostgreSQL share a transaction.
-- Verify real React → FastAPI → PostgreSQL journeys in isolated CI; diagnose
-  failures with safe JSON logs, request IDs and separate health/readiness checks.
+- Confirm Stripe payments through signed, deduplicated webhooks and reconcile
+  late payment without resurrecting cancelled Bookings.
+- Track Cloudinary/SQL partial failures through durable media and cleanup
+  states.
+- Test real React → FastAPI → PostgreSQL journeys alongside a separate static,
+  zero-backend showcase suite in GitHub Actions.
 
-[Architecture and Booking data flow](docs/architecture.md) ·
-[Portfolio case study](docs/portfolio-case-study.md) · [Documentation index](docs/README.md)
+## Architecture and stack
 
-## Stack
+The full-stack path is **React → FastAPI → PostgreSQL**, with Stripe Checkout
+and inbound webhooks, plus Cloudinary storage/public media delivery. The Vercel
+showcase reuses the React UI with a local synthetic adapter; it is **not** that
+full-stack runtime. A same-origin Render deployment is prepared but not live.
+[Architecture and Booking data flow](docs/architecture.md).
 
 React 19, TypeScript 6, Vite 8, Tailwind 4, React Router and TanStack Query;
-Python 3.14, FastAPI, SQLAlchemy, Psycopg and Alembic; PostgreSQL 18;
-Stripe Checkout Elements and Cloudinary; Pytest, Vitest/Testing Library,
-headless Playwright and GitHub Actions. Server state stays in TanStack Query;
-Zustand is installed but no artificial duplicated API store was added.
+Python 3.14, FastAPI, SQLAlchemy, Psycopg and Alembic; PostgreSQL 18; Stripe,
+Cloudinary, Pytest, Vitest/Testing Library, Playwright and GitHub Actions.
 
 ## Run locally from a clean clone
 
-Prerequisites: Python **3.14**, Node **24** (or supported 22.22+), and PostgreSQL **18**.
+Prerequisites: Python **3.14**, Node **24** (or Node **22.22+** within the 22.x line), and PostgreSQL **18**.
 Use the [database setup](docs/database.md#reproduce-the-isolated-setup-on-macos) to
 create separate non-superuser `pawtel_dev` and `pawtel_test` roles/databases.
 The documented macOS cluster uses loopback port **5433**; adapt connection URLs to
@@ -200,23 +195,23 @@ secrets and never deploys. [Runbook and complete commands](docs/operations.md).
 The [first CI failure and verified recovery](docs/portfolio-case-study.md#cie2e-and-deployment-hardening)
 show why explicit test configuration matters.
 
-## Read further
+## Documentation
 
-[Authentication](docs/authentication.md) · [Pets](docs/pet-profiles.md) ·
-[Bookings](docs/bookings.md) · [Payments](docs/payments.md) ·
-[Host/Listings/media](docs/host-listings.md) · [Discovery](docs/listing-discovery.md) ·
-[Operations](docs/operations.md) · [Deployment](docs/deployment.md) · [ADRs](docs/adr/README.md)
-
-[Résumé material](docs/resume-bullets.md) · [Interview guide](docs/interview-guide.md) ·
-[Manual screenshot plan](docs/images/README.md)
+Start with the [documentation index](docs/README.md) for domain contracts,
+security, operations, deployment and ADRs. For an assessment, use the
+[case study](docs/portfolio-case-study.md),
+[interview guide](docs/interview-guide.md),
+[role-specific résumé bullets](docs/resume-bullets.md) and
+[portfolio-site copy](docs/portfolio-entry.md).
 
 ## Current limits
 
-Not production-ready: sandbox-only payments; no real email delivery/recovery,
-reviews, messaging, notifications, admin, payouts or maps. Hosting is prepared but
-not provisioned or publicly verified. Demo request budgets are single-process,
-not distributed abuse protection. Load/security assessment, restore drills,
-operational scheduling, final CSP/provider verification and customer/privacy/support
-processes remain launch work. Known development-tooling advisories are documented
-in [operations](docs/operations.md#dependency-review-observed-locally); no Python
-vulnerability-free claim is made.
+The full-stack Render demo is not live. Real email delivery/recovery is absent;
+payments are sandbox-only; Cloudinary hosted acceptance remains manual.
+Distributed abuse controls, monitoring, restore drills, security/load assessment
+and customer/privacy/support processes remain production work. No reviews,
+messaging, notifications or admin features are implemented.
+
+The last npm audit reported zero production advisories while development-tool
+advisories remain; this is not a vulnerability-free claim. See the dated
+[dependency note](docs/operations.md#dependency-review-observed-locally).

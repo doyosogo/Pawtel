@@ -4,6 +4,12 @@ PAWTEL is an Australian dog/cat boarding marketplace implemented as a modular
 monolith: one React application, one FastAPI service, one PostgreSQL database.
 External providers have explicit adapters; they are not separate PAWTEL services.
 
+The live Vercel [frontend showcase](frontend-showcase.md) is a separate static build
+of the same React interface backed by synthetic in-memory data. It does not run
+FastAPI/PostgreSQL or exercise real provider calls. GitHub Actions checks both
+frontend modes and the real UI/API/database journey. The Render full-stack topology
+below is prepared, not live.
+
 ```mermaid
 flowchart LR
     B[Browser / React + TypeScript] -->|HTTPS JSON; HttpOnly session cookie; CSRF on writes| A[FastAPI]
@@ -139,4 +145,4 @@ Registration is disabled only in configured portfolio mode; invited synthetic
 users authenticate normally. Small aggregate request budgets are explicitly
 single-process, not distributed. See [deployment guide](deployment.md) for costs,
 manual account actions, credentials, rollback and launch limitations. No deployment
-URL or remote successful release is asserted.
+URL or remote successful full-stack release is asserted.
