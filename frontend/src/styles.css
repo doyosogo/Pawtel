@@ -1861,3 +1861,54 @@ main {
   border-radius: 12px;
   margin-block: 16px;
 }
+
+/* The static showcase is visibly distinct without interrupting the marketplace. */
+.showcase-notice {
+  background: #f1edff;
+  border-bottom: 1px solid #ded5f5;
+  color: #332252;
+}
+.showcase-inner {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-block: 1rem;
+}
+.showcase-inner > div:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.showcase-inner p {
+  margin: 0.3rem 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.showcase-inner a {
+  font-size: 0.85rem;
+}
+.showcase-personas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  max-width: 24rem;
+}
+.showcase-personas [aria-pressed='true'] {
+  outline: 2px solid #5630a1;
+  outline-offset: 3px;
+}
+.showcase-reset {
+  background: transparent;
+  border: 0;
+  color: #49306d;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.4rem;
+}
+@media (max-width: 760px) {
+  .showcase-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}

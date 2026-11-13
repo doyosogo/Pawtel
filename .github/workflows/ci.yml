@@ -97,6 +97,10 @@ jobs:
         run: npm test -- --run
       - name: TypeScript and production build
         run: npm run build
+      - name: Install bundled Chromium for static showcase
+        run: npx playwright install --with-deps chromium
+      - name: Static showcase journeys without backend or providers
+        run: npm run test:showcase
   e2e:
     name: e2e
     needs: [backend, frontend]

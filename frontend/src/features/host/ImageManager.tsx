@@ -1,3 +1,4 @@
+import { SHOWCASE } from '../../showcase/mode';
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { uploadImage, write } from '../../lib/api';
@@ -63,6 +64,12 @@ export function ImageManager({ listing }: { listing: HostListing }) {
         and at most 24 megapixels. Animated images are not supported. First
         photo is the cover.
       </p>
+      {SHOWCASE && (
+        <p className="notice">
+          Cloud upload is available in the full-stack implementation. These
+          bundled illustrations can be reordered or removed locally.
+        </p>
+      )}
       <form
         className="stack"
         onSubmit={(e) => {
@@ -106,7 +113,7 @@ export function ImageManager({ listing }: { listing: HostListing }) {
                   : '',
               );
             }}
-            disabled={mutation.isPending || images.length >= 6}
+            disabled={SHOWCASE || mutation.isPending || images.length >= 6}
           />
         </label>
         <label className="field">
@@ -115,7 +122,7 @@ export function ImageManager({ listing }: { listing: HostListing }) {
         </label>
         <button
           className="button"
-          disabled={mutation.isPending || images.length >= 6}
+          disabled={SHOWCASE || mutation.isPending || images.length >= 6}
         >
           {mutation.isPending ? 'Updating photos…' : 'Upload photo'}
         </button>

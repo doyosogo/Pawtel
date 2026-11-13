@@ -273,3 +273,10 @@ The [deployment guide](deployment.md) supersedes the generic Nginx example for t
 selected Render portfolio deployment. React and FastAPI share one web service;
 Render handles HTTPS, while application headers and explicitly single-process
 aggregate demo budgets remain server-side. The old Nginx example is not deployed.
+
+## Static showcase verification
+
+The frontend CI job also builds and runs the [synthetic showcase](frontend-showcase.md)
+with bundled headless Chromium and no backend/database/provider. Its network/storage
+checks complement the existing isolated full-stack E2E job; they do not replace it.
+Use `cd frontend && npm run test:showcase` after the documented browser installation.

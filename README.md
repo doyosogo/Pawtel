@@ -8,21 +8,34 @@ A production-shaped full-stack portfolio MVP built with **React, TypeScript,
 FastAPI and PostgreSQL**. Boarding is the current service scope; this is not a
 production-ready service or a real accommodation offer.
 
-**Verified:** 520 backend tests · 141 frontend tests · 3 real headless E2E tests.
-GitHub-hosted [run 43317246922](https://github.com/doyosogo/Pawtel/actions/runs/43317246922)
-is fully green for `main` commit `da2255d` (backend, frontend and E2E).
+**Verified:** 520 backend tests · 157 frontend tests · 3 full-stack E2E tests · 3 static showcase E2E tests.
+GitHub-hosted [run 43339550717](https://github.com/doyosogo/Pawtel/actions/runs/43339550717)
+is fully green for `main` commit `f1f87d8` (backend, frontend and E2E).
 
-## Live demo
+## Frontend showcase
+
+<!-- FRONTEND_SHOWCASE_URL: replace the next paragraph only after manual verification. -->
+
+**Vercel showcase: not deployed — URL pending manual deployment.**
+
+The static **Frontend Showcase — synthetic data** reuses PAWTEL's React UI with
+local simulated actions. Explore as Owner or Host without passwords, backend or
+provider setup. No real accounts, bookings or payments are created.
+[Run or deploy the showcase](docs/frontend-showcase.md).
+
+## Full-stack implementation and hosted demo
+
+This repository contains the real React → FastAPI → PostgreSQL implementation,
+including session/CSRF security, Booking concurrency, Stripe and Cloudinary.
+The showcase complements this implementation; it does not replace it.
 
 <!-- LIVE_DEMO_STATUS: replace only the next paragraph after a real public URL is verified. -->
 
-**Not deployed — live demo URL pending manual deployment and verification.**
+**Full-stack Render demo: not deployed — provisioning and verification remain manual.**
 
-Deployment configuration exists. Follow the manual provisioning, secret setup,
-release and public smoke checks before publishing this link.
 See the [deployment guide](docs/deployment.md) and [final handoff](docs/deployment-checklist.md).
-A future public portfolio demo will use synthetic data and privately shared access,
-with registration disabled. No reusable password belongs in this repository.
+The full-stack synthetic demo uses privately shared access and server-disabled
+registration. No reusable password belongs in this repository.
 
 ## Engineering highlights
 

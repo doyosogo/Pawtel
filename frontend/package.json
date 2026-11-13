@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "engines": {
-    "node": "^22.22.0 || >=24.0.0"
+    "node": "^22.22.0 || ^24.0.0"
   },
   "scripts": {
     "dev": "vite",
@@ -15,7 +15,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:e2e": "node e2e/run.mjs",
-    "e2e:install": "playwright install chromium"
+    "e2e:install": "playwright install chromium",
+    "build:showcase": "tsc -b && vite build --mode showcase",
+    "dev:showcase": "vite --mode showcase",
+    "preview:showcase": "vite preview --mode showcase --host 127.0.0.1 --port 4177 --strictPort",
+    "test:showcase": "PLAYWRIGHT_BROWSERS_PATH=../.cache/pw-browsers playwright test --config playwright.showcase.config.ts"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^7.0.1",

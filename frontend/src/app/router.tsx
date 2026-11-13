@@ -1,3 +1,5 @@
+import { SHOWCASE } from '../showcase/mode';
+import { ShowcaseAccess } from '../showcase/ShowcasePages';
 import { createBrowserRouter } from 'react-router';
 import { Layout } from './Layout';
 import { HomePage } from '../pages/HomePage';
@@ -11,7 +13,7 @@ import { PetsPage } from '../features/pets/PetsPage';
 import { BookingsPage } from '../features/bookings/BookingsPage';
 import { BookingDetailPage } from '../features/bookings/BookingDetailPage';
 import { HostGate, HostPage } from '../features/host/HostPage';
-import { CheckoutPage } from '../features/payments/CheckoutPage';
+import { CheckoutRoute } from '../features/payments/CheckoutRoute';
 import { PaymentReturnPage } from '../features/payments/PaymentReturnPage';
 import { HostListingsPage } from '../features/host/HostListingsPage';
 import { ListingFormPage } from '../features/host/ListingFormPage';
@@ -22,8 +24,18 @@ export const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/stays', element: <StaysPage /> },
       { path: '/stays/:listingId', element: <ListingDetailPage /> },
-      { path: '/login', element: <AuthPage key="login" /> },
-      { path: '/register', element: <AuthPage key="register" register /> },
+      {
+        path: '/login',
+        element: SHOWCASE ? <ShowcaseAccess /> : <AuthPage key="login" />,
+      },
+      {
+        path: '/register',
+        element: SHOWCASE ? (
+          <ShowcaseAccess />
+        ) : (
+          <AuthPage key="register" register />
+        ),
+      },
       { path: '/account', element: <AccountPage /> },
       { path: '/hosting', element: <HostingPage /> },
       {
@@ -36,7 +48,7 @@ export const router = createBrowserRouter([
           { path: '/account/bookings', element: <BookingsPage /> },
           {
             path: '/account/bookings/:bookingId/pay',
-            element: <CheckoutPage />,
+            element: <CheckoutRoute />,
           },
           {
             path: '/account/bookings/:bookingId/payment-return',

@@ -90,3 +90,8 @@ URL and local databases. Preserve those local defaults; the deployment inventory
 and Blueprint define production values. Any VITE_ variable is public build data:
 never place database URLs, passwords, Stripe secret/webhook keys, Cloudinary admin
 credentials or seed passwords under VITE_.
+
+The separate static Vercel showcase uses only the committed public
+`VITE_PAWTEL_SHOWCASE=true` in `frontend/.env.showcase` and Vite showcase mode.
+Do not add that flag to Render or ordinary local environments. See
+[frontend showcase](frontend-showcase.md); it is not another backend deployment setting.

@@ -1,3 +1,4 @@
+import { SHOWCASE } from '../showcase/mode';
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -19,6 +20,14 @@ export function apiPath(path: string) {
 }
 
 async function send<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (SHOWCASE) {
+    const { showcaseRequest } = await import('../showcase/adapter');
+    return showcaseRequest<T>(
+      path,
+      init.method ?? 'GET',
+      init.body ? JSON.parse(String(init.body)) : {},
+    );
+  }
   let response: Response;
   try {
     response = await fetch(apiPath(path), {
@@ -74,6 +83,10 @@ export async function write<T>(
   body: unknown = {},
   method = 'POST',
 ): Promise<T> {
+  if (SHOWCASE) {
+    const { showcaseRequest } = await import('../showcase/adapter');
+    return showcaseRequest<T>(path, method, body);
+  }
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-PAWTEL-Request': '1',
@@ -184,6 +197,12 @@ export function errorMessage(error: unknown): string {
 
 // Only this ownership-protected endpoint accepts binary images; JSON writes keep their contract.
 export async function uploadImage(listingId: string, file: File, alt: string) {
+  if (SHOWCASE)
+    throw new ApiError(
+      400,
+      'showcase_only',
+      'Cloud upload is available in the full-stack implementation.',
+    );
   const csrf = await get<{ csrf_token: string }>('/auth/csrf');
   return send(
     `/host/listings/${encodeURIComponent(listingId)}/images?${new URLSearchParams({ alt_text: alt })}`,

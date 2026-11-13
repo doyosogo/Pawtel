@@ -46,3 +46,7 @@ build/
 frontend/e2e-results/
 frontend/playwright-report/
 frontend/playwright/.cache/
+
+# Deliberately committed public showcase build flag (never credentials).
+!frontend/.env.showcase
+.vercel/
